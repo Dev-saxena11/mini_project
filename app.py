@@ -1,5 +1,4 @@
 from flask import Flask, render_template,request,session,redirect,flash
-
 app = Flask(__name__)
 app.secret_key = "my_secret_123"
 # 🗂 Fake database (dictionary)
