@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Traveltogether-travel</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 </head>
 <body>
     <header class="navbar">
@@ -27,9 +28,51 @@
     </header>
     <main>
         <section class="welcome-section">
-            <h1>Welcome to Travel Together!</h1>
-            <p>Discover amazing destinations, connect with fellow travelers, and create unforgettable memories. Join our community and start your next adventure today.</p>
-            <button class="cta-button" onclick="openChatbot()">Get Started with Our Travel Assistant</button>
+            <h1>Plan Your Perfect Trip</h1>
+            <p>Enter your route and dates. We’ll craft an interactive, animated itinerary.</p>
+        </section>
+
+        <section class="planner-section">
+            <form id="planner-form" class="planner-form" onsubmit="return false;">
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>From</label>
+                        <input type="text" id="from-city" placeholder="e.g., Delhi">
+                    </div>
+                    <div class="form-field">
+                        <label>To</label>
+                        <input type="text" id="to-city" placeholder="e.g., Jaipur" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Start</label>
+                        <input type="date" id="start-date" required>
+                    </div>
+                    <div class="form-field">
+                        <label>End</label>
+                        <input type="date" id="end-date" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="chip-group" id="interest-chips">
+                        <span class="chip" data-tag="history">History</span>
+                        <span class="chip" data-tag="nature">Nature</span>
+                        <span class="chip" data-tag="food">Food</span>
+                        <span class="chip" data-tag="culture">Culture</span>
+                        <span class="chip" data-tag="shopping">Shopping</span>
+                    </div>
+                    <div class="planner-actions">
+                        <button class="cta-button" id="build-itinerary">Build Itinerary</button>
+                        <button class="cta-button ghost" id="use-location" type="button">Use my location</button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <section class="itinerary-section">
+            <div id="itinerary-container" class="days-container"></div>
+            <div class="map-wrapper">
+                <div id="map" class="itinerary-map"></div>
+            </div>
         </section>
     </main>
 
@@ -84,5 +127,156 @@
         </div>
     </footer>
     <script src="/static/script.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script>
+        // Planner interactions and fetching itinerary
+        (function(){
+            const chips = document.querySelectorAll('.chip');
+            chips.forEach(ch => ch.addEventListener('click', () => ch.classList.toggle('active')));
+
+            const btn = document.getElementById('build-itinerary');
+            const locBtn = document.getElementById('use-location');
+            const container = document.getElementById('itinerary-container');
+
+            function createCard(item){
+                const card = document.createElement('div');
+                card.className = 'poi-card hover-pop rotatable';
+                card.setAttribute('tabindex','0');
+                card.innerHTML = `
+                    <div class="poi-media">
+                        <img src="${item.image || '/static/images/temple.jpg'}" alt="${item.name}">
+                    </div>
+                    <div class="poi-body">
+                        <h4>${item.name}</h4>
+                        <p>${item.description || ''}</p>
+                    </div>
+                `;
+                card.addEventListener('mouseenter', () => card.classList.add('rotating'));
+                card.addEventListener('mouseleave', () => card.classList.remove('rotating'));
+                card.addEventListener('click', () => card.classList.toggle('selected'));
+                card.draggable = true;
+                card.addEventListener('dragstart', (ev) => {
+                    ev.dataTransfer.setData('text/plain', JSON.stringify(item));
+                    card.classList.add('dragging');
+                });
+                card.addEventListener('dragend', () => card.classList.remove('dragging'));
+                return card;
+            }
+
+            function renderMap(days){
+                if (!window._leafletMap) {
+                    window._leafletMap = L.map('map');
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        maxZoom: 19,
+                        attribution: '&copy; OpenStreetMap'
+                    }).addTo(window._leafletMap);
+                }
+                const map = window._leafletMap;
+                const markers = [];
+                days.forEach(day => {
+                    day.items.forEach(p => {
+                        if (p.lat && p.lon) {
+                            const m = L.marker([p.lat, p.lon]).addTo(map);
+                            m.bindPopup(`<b>${p.name}</b><br/>${p.description ? p.description.substring(0,120) + '…' : ''}`);
+                            markers.push(m);
+                        }
+                    });
+                });
+                if (markers.length) {
+                    const group = L.featureGroup(markers);
+                    map.fitBounds(group.getBounds().pad(0.2));
+                }
+            }
+
+            function enableDragReorder(){
+                document.querySelectorAll('.poi-grid').forEach(grid => {
+                    grid.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const dragging = grid.querySelector('.dragging');
+                        const afterElement = Array.from(grid.querySelectorAll('.poi-card:not(.dragging)'))
+                            .reduce((closest, child) => {
+                                const box = child.getBoundingClientRect();
+                                const offset = e.clientY - box.top - box.height / 2;
+                                if (offset < 0 && offset > closest.offset) {
+                                    return { offset, element: child };
+                                } else {
+                                    return closest;
+                                }
+                            }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+                        if (!dragging) return;
+                        if (afterElement == null) {
+                            grid.appendChild(dragging);
+                        } else {
+                            grid.insertBefore(dragging, afterElement);
+                        }
+                    });
+                });
+            }
+
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                container.innerHTML = '';
+
+                const interests = Array.from(document.querySelectorAll('.chip.active')).map(c => c.dataset.tag);
+                const payload = {
+                    from: document.getElementById('from-city').value,
+                    to: document.getElementById('to-city').value,
+                    startDate: document.getElementById('start-date').value,
+                    endDate: document.getElementById('end-date').value,
+                    interests
+                };
+
+                const res = await fetch('/api/itinerary', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if(!res.ok){
+                    const err = await res.json().catch(()=>({error:'Request failed'}));
+                    container.innerHTML = `<div class="error">${err.error || 'Something went wrong.'}</div>`;
+                    return;
+                }
+
+                const data = await res.json();
+                data.days.forEach(day => {
+                    const dayBlock = document.createElement('div');
+                    dayBlock.className = 'day-block';
+                    dayBlock.innerHTML = `<h3 class="day-title">${day.date}</h3>`;
+                    const grid = document.createElement('div');
+                    grid.className = 'poi-grid';
+                    day.items.forEach(item => grid.appendChild(createCard(item)));
+                    dayBlock.appendChild(grid);
+                    container.appendChild(dayBlock);
+                });
+                enableDragReorder();
+                renderMap(data.days);
+            });
+
+            locBtn.addEventListener('click', async () => {
+                if (!navigator.geolocation) { alert('Geolocation not supported'); return; }
+                locBtn.disabled = true; locBtn.textContent = 'Finding city...';
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    try {
+                        const { latitude, longitude } = pos.coords;
+                        // Use Nominatim reverse geocoding (no key) for city name
+                        const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`;
+                        const resp = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                        const j = await resp.json();
+                        const city = j.address && (j.address.city || j.address.town || j.address.village || j.address.state_district || j.address.state);
+                        if (city) {
+                            document.getElementById('to-city').value = city;
+                        } else {
+                            alert('Could not detect city.');
+                        }
+                    } catch(e) {
+                        alert('Failed to detect city.');
+                    } finally {
+                        locBtn.disabled = false; locBtn.textContent = 'Use my location';
+                    }
+                }, () => { locBtn.disabled = false; locBtn.textContent = 'Use my location'; alert('Location permission denied.'); });
+            });
+        })();
+    </script>
 </body>
 </html>

@@ -1,0 +1,75 @@
+[
+  {
+    "id": "india-gate",
+    "name": "India Gate",
+    "city": "Delhi",
+    "description": "War memorial and popular boulevard in New Delhi.",
+    "image": "/static/images/india-gate.jpg",
+    "suggestedDurationMin": 60,
+    "tags": ["history", "culture"]
+  },
+  {
+    "id": "qutub-minar",
+    "name": "Qutub Minar",
+    "city": "Delhi",
+    "description": "UNESCO World Heritage Site with a soaring victory tower.",
+    "image": "/static/images/Qutub (2).jpg",
+    "suggestedDurationMin": 90,
+    "tags": ["history", "architecture"]
+  },
+  {
+    "id": "hawa-mahal",
+    "name": "Hawa Mahal",
+    "city": "Jaipur",
+    "description": "The Palace of Winds with its iconic honeycomb facade.",
+    "image": "/static/images/hawa.jpg",
+    "suggestedDurationMin": 60,
+    "tags": ["history", "architecture", "culture"]
+  },
+  {
+    "id": "taj-mahal",
+    "name": "Taj Mahal",
+    "city": "Agra",
+    "description": "Iconic ivory-white marble mausoleum on the Yamuna river.",
+    "image": "/static/images/tajmahal.jpg",
+    "suggestedDurationMin": 150,
+    "tags": ["history", "architecture", "romantic"]
+  },
+  {
+    "id": "charminar",
+    "name": "Charminar",
+    "city": "Hyderabad",
+    "description": "16th-century mosque and monument at the heart of the city.",
+    "image": "/static/images/charminar.jpg",
+    "suggestedDurationMin": 75,
+    "tags": ["history", "culture", "shopping"]
+  },
+  {
+    "id": "meenakshi-temple",
+    "name": "Meenakshi Amman Temple",
+    "city": "Madurai",
+    "description": "Historic Dravidian temple complex with towering gopurams.",
+    "image": "/static/images/madurai-temple.jpg",
+    "suggestedDurationMin": 120,
+    "tags": ["temple", "culture", "architecture"]
+  },
+  {
+    "id": "jageshwar-dham",
+    "name": "Jageshwar Dham",
+    "city": "Almora",
+    "description": "Ancient temple cluster in a serene deodar forest.",
+    "image": "/static/images/Jageshwar-Dham-Temple.jpg",
+    "suggestedDurationMin": 120,
+    "tags": ["temple", "nature", "spiritual"]
+  },
+  {
+    "id": "generic-temple",
+    "name": "Local Temple Visit",
+    "city": "Jaipur",
+    "description": "Experience local spirituality and architecture.",
+    "image": "/static/images/temple.jpg",
+    "suggestedDurationMin": 60,
+    "tags": ["temple", "culture"]
+  }
+]
+

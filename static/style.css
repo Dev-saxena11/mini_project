@@ -112,6 +112,42 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 20px rgba(0, 119, 182, 0.3);
         }
+        /* Planner */
+        .planner-section { padding: 20px 5% 0; }
+        .planner-form { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); padding: 18px; animation: fadeInUp 0.6s ease-out; }
+        .planner-form .form-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+        .planner-form .form-field { display: flex; flex-direction: column; gap: 6px; min-width: 180px; flex: 1; }
+        .planner-form label { font-size: 0.85rem; color: #555; }
+        .planner-form input[type="text"], .planner-form input[type="date"] { padding: 10px 12px; border-radius: 10px; border: 1px solid #e3e7ee; outline: none; transition: border 0.2s, box-shadow 0.2s; }
+        .planner-form input:focus { border-color: #80bfff; box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1); }
+        .chip-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .chip { padding: 8px 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 20px; cursor: pointer; transition: all 0.2s; user-select: none; }
+        .chip:hover { transform: translateY(-1px); background: #e9f5ff; }
+        .chip.active { background: #0077b6; border-color: #0077b6; color: #fff; box-shadow: 0 6px 16px rgba(0,119,182,0.25); }
+        .planner-actions { display: flex; gap: 10px; align-items: center; }
+        .cta-button.ghost { background: #fff; color: #0077b6; border: 1px solid #0096c7; }
+
+        /* Itinerary */
+        .itinerary-section { padding: 30px 5% 60px; }
+        .days-container { display: flex; flex-direction: column; gap: 24px; }
+        .day-block { background: linear-gradient(180deg, #ffffff, #f8fbff); border-radius: 18px; padding: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.06); animation: fadeInUp 0.6s ease-out; }
+        .day-title { color: #0b7285; margin-bottom: 12px; }
+        .poi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; perspective: 900px; perspective-origin: 50% 50%; }
+        .map-wrapper { margin-top: 18px; }
+        .itinerary-map { width: 100%; height: 380px; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .poi-card { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,0.08); transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease; transform-style: preserve-3d; will-change: transform, box-shadow; }
+        .poi-card.selected { outline: 3px solid #22b8cf; box-shadow: 0 20px 40px rgba(34, 184, 207, 0.35); }
+        .poi-media { position: relative; height: 140px; overflow: hidden; }
+        .poi-media img { width: 100%; height: 100%; object-fit: cover; display: block; transform: translateZ(0px) scale(1); transform-style: preserve-3d; transition: transform 0.3s ease; will-change: transform; }
+        .poi-body { padding: 12px; }
+        .poi-body h4 { margin: 0 0 6px; color: #074d63; font-size: 1.05rem; }
+        .poi-body p { margin: 0; color: #4a5568; font-size: 0.9rem; }
+        .hover-pop:hover { transform: translateY(-6px) translateZ(20px) scale(1.02); box-shadow: 0 14px 30px rgba(0,119,182,0.18); }
+        .hover-pop:hover .poi-media img { transform: translateZ(60px) scale(1.06) rotateY(10deg) rotateX(-4deg); }
+        .rotatable.rotating .poi-media img { animation: gentle-rotate 2.6s linear infinite; }
+        .rotatable:hover { filter: saturate(1.08) contrast(1.03); }
+        @keyframes gentle-rotate { from { transform: translateZ(60px) rotateY(0deg) rotateX(-4deg) scale(1.06); } to { transform: translateZ(60px) rotateY(360deg) rotateX(-4deg) scale(1.06); } }
+        .error { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; padding: 12px; border-radius: 10px; }
 
         /* Chatbot Styles */
         .chatbot-toggle {
@@ -455,4 +491,7 @@
     transform: translateY(-8px);
     box-shadow: 0 12px 30px rgba(0, 119, 182, 0.2);
 }
+
+/* Rotating pop for place thumbnails where used elsewhere */
+.place-card:hover img { animation: gentle-rotate 4s linear infinite; transform-origin: 50% 50%; }
 

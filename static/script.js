@@ -161,3 +161,5 @@ const menuToggle = document.getElementById('menu-toggle');
                 toggle.style.animation = 'pulse 2s infinite';
             }, 2000);
         });
+
+        // Removed JS tilt to let CSS 3D transforms apply consistently
