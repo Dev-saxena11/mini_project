@@ -8,48 +8,69 @@
 </head>
 <body>
     <div class="auth-container">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul style="color: red; list-style:none; padding:0;">
-          {% for message in messages %}
-            <li>{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-    
-    <!-- Login Form -->
-    <div id="login-form">
-        <h2>Login</h2>
-        <form method="POST">
-            <input type="hidden" name="action" value="login">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <span class="toggle-link" onclick="toggleForms()">Don’t have an account? Register</span>
-    </div>
+    <div class="form-wrapper {% if show_register %}show-register{% endif %}" id="formWrapper">
 
+        <!-- Login Form -->
+        <div class="form-panel login-panel">
+            <h2>Login</h2>
+            <form method="POST">
+                <input type="hidden" name="action" value="login">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <span class="toggle-link" onclick="toggleForms()">Don’t have an account? Register</span>
+        </div>
 
         <!-- Register Form -->
-        <div id="register-form" class="hidden">
+        <div class="form-panel register-panel">
             <h2>Register</h2>
             <form method="POST">
                 <input type="hidden" name="action" value="register">
+
                 <input type="text" name="username" placeholder="Username" required>
                 <input type="email" name="email" placeholder="Email" required>
-                <input type="password" name="password" placeholder="Password" required>
+                <input type="password" name="password" placeholder="Password (min 6 chars, letters, numbers, special chars)" required>
+
+                <input type="text" name="phone_no" placeholder="Phone Number (optional)">
+                <select name="gender">
+                    <option value="">Select Gender (optional)</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select name="marital_status">
+                    <option value="">Marital Status (optional)</option>
+                    <option value="Single">Single</option>
+                    <option value="Married">Married</option>
+                    <option value="Divorced">Divorced</option>
+                    <option value="Widowed">Widowed</option>
+                </select>
+                <textarea name="bio" placeholder="Write a short bio (optional)"></textarea>
+
                 <button type="submit">Register</button>
             </form>
             <span class="toggle-link" onclick="toggleForms()">Already have an account? Login</span>
         </div>
+
     </div>
+</div>
+
+<script>
+    function toggleForms() {
+        document.getElementById("formWrapper").classList.toggle("show-register");
+    }
+</script>
 
     <script>
-        function toggleForms() {
-            document.getElementById("login-form").classList.toggle("hidden");
-            document.getElementById("register-form").classList.toggle("hidden");
-        }
-    </script>
+    // Auto-hide flash messages after 3s
+    setTimeout(() => {
+        document.querySelectorAll('.flash').forEach(el => {
+            el.style.opacity = '0';
+            setTimeout(() => el.remove(), 500); // remove after fade
+        });
+    }, 3000);
+</script>
+
 </body>
 </html>

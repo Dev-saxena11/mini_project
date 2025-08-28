@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traveltogether-user</title>
+    <title>User Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -11,23 +11,58 @@
         <div class="logo">
             <p>Travel Together</p>
         </div>
-        <nav class="nav-links" id="nav-links">
+        <nav class="nav-links">
             <a href="/home">Home</a>
-            <a href="/user">User Dashboard</a>
+            <a href="/user" class="active">User Dashboard</a>
             <a href="/groups">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
-            
         </nav>
-        <div class="menu-toggle" id="menu-toggle">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </div>
     </header>
+
     <main>
-        
+        <div class="groups-container">
+            <h2>👤 User Dashboard</h2>
+
+            <div class="group-item">
+                <strong>{{ user['username'] }}</strong><br>
+                <span>Email: {{ user['email'] }}</span><br>
+                {% if user['phone_no'] %}<span>Phone: {{ user['phone_no'] }}</span><br>{% endif %}
+                {% if user['gender'] %}<span>Gender: {{ user['gender'] }}</span><br>{% endif %}
+                {% if user['marital_status'] %}<span>Status: {{ user['marital_status'] }}</span><br>{% endif %}
+                {% if user['bio'] %}<p>Bio: {{ user['bio'] }}</p>{% endif %}
+            </div>
+
+            <hr style="margin:20px 0;">
+
+            {% if group %}
+                <h3>📌 Current Group: {{ group['group_name'] }}</h3>
+                <p>{{ group['group_description'] or "No description" }}</p>
+                <p>Members: {{ group['member_count'] }}</p>
+
+                <h4>👥 Group Members</h4>
+                <ul class="group-list">
+                    {% for member in members %}
+                        <li class="group-item">
+                            <strong>{{ member['username'] }}</strong> 
+                            <span>({{ member['role'] }})</span><br>
+                            <span>Email: {{ member['email'] }}</span><br>
+                            {% if member['phone_no'] %}<span>Phone: {{ member['phone_no'] }}</span><br>{% endif %}
+                            <span>Joined: {{ member['joined_at'] }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <div style="margin-top:20px;">
+                    <a href="/groups/leave">🚪 Leave Group</a>
+                </div>
+            {% else %}
+                <p>You are not currently in a group.</p>
+                <a href="/groups">👉 Join or create a group</a>
+            {% endif %}
+        </div>
     </main>
+
     <footer>
         <div class="main-contain">
             <p>&copy; 2025 Mini Project</p>

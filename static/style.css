@@ -368,41 +368,106 @@
                 right: 20px;
             }
         }
-        .auth-container {
-            width: 350px;
-            margin: 100px auto;
-            padding: 20px;
-            border-radius: 12px;
-            background: #fff;
-            box-shadow: 0px 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-        }
-        .auth-container h2 { margin-bottom: 15px; }
-        .auth-container input {
-            width: 90%;
-            padding: 10px;
-            margin: 8px 0;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-        }
-        .auth-container button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: none;
-            border-radius: 8px;
-            background: #0077cc;
-            color: #fff;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .toggle-link {
-            display: block;
-            margin-top: 10px;
-            color: #0077cc;
-            cursor: pointer;
-        }
-        .hidden { display: none; }
+        /* ---------- Auth Page Styling ---------- */
+/* ---------- Auth Container ---------- */
+.auth-container {
+    width: 420px;
+    max-width: 95%;
+    margin: 80px auto;
+    padding: 0; /* remove padding to let panels use full space */
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0px 8px 25px rgba(0,0,0,0.15);
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-container::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(135deg, #0077b6, #00b4d8, #90e0ef, #0077b6);
+    background-size: 300% 300%;
+    animation: gradientBG 10s ease infinite;
+    z-index: -1;
+    opacity: 0.15;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.auth-container h2 {
+    margin-bottom: 20px;
+    color: #0077b6;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.auth-container input,
+.auth-container select,
+.auth-container textarea {
+    width: 100%;
+    padding: 12px 14px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.auth-container input:focus,
+.auth-container select:focus,
+.auth-container textarea:focus {
+    border-color: #0096c7;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(0, 150, 199, 0.3);
+    outline: none;
+}
+
+.auth-container button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0077b6, #0096c7);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.auth-container button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 119, 182, 0.3);
+}
+
+.toggle-link {
+    display: block;
+    margin-top: 15px;
+    color: #0077cc;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.toggle-link:hover {
+    color: #005fa3;
+    text-decoration: underline;
+}
+
+.hidden { display: none; }
+
     
  /* Places Section */
 .places-section {
@@ -454,5 +519,324 @@
 .place-card:hover {
     transform: translateY(-8px);
     box-shadow: 0 12px 30px rgba(0, 119, 182, 0.2);
+}
+
+/* ---------- Groups Page ---------- */
+.groups-container {
+    width: 80%;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.15);
+}
+
+.groups-container h2 {
+    margin-bottom: 20px;
+    color: #0077b6;
+    text-align: center;
+}
+
+.group-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.group-form input,
+.group-form select,
+.group-form textarea {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    width: 100%;
+}
+
+.group-form button {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background: #0077cc;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.group-form button:hover {
+    background: #005fa3;
+}
+
+.group-list {
+    list-style: none;
+    padding: 0;
+    display: grid;
+    gap: 20px;
+}
+
+.group-item {
+    background: #f9f9f9;
+    padding: 15px 20px;
+    border-radius: 10px;
+    border: 1px solid #e1e1e1;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.group-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
+
+.group-item strong {
+    font-size: 1.2rem;
+    color: #0096c7;
+}
+
+.group-item a {
+    display: inline-block;
+    margin-top: 8px;
+    color: #0077cc;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.group-item a:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Auth Form Enhancements ---------- */
+.auth-container select,
+.auth-container textarea {
+    width: 90%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    resize: vertical;
+    min-height: 40px;
+}
+
+.auth-container textarea {
+    min-height: 70px;
+}
+
+/* ---------- User Dashboard ---------- */
+.user-profile {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid #e1e1e1;
+    margin-bottom: 25px;
+    text-align: left;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.05);
+}
+
+.user-profile strong {
+    font-size: 1.4rem;
+    color: #0077b6;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.user-profile span,
+.user-profile p {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    color: #444;
+}
+
+.group-section {
+    margin-top: 30px;
+}
+
+.group-section h3 {
+    color: #0096c7;
+    margin-bottom: 10px;
+}
+
+.group-section h4 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: #0077b6;
+}
+
+.group-members-list {
+    display: grid;
+    gap: 15px;
+    list-style: none;
+    padding: 0;
+}
+
+.group-members-list .group-item {
+    background: #ffffff;
+    border: 1px solid #eaeaea;
+    padding: 15px;
+    border-radius: 10px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.group-members-list .group-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
+
+.leave-btn {
+    display: inline-block;
+    margin-top: 15px;
+    padding: 8px 15px;
+    background: #e63946;
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.leave-btn:hover {
+    background: #c71c30;
+}
+
+/* Flash Messages */
+.flash-messages {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+}
+
+.flash {
+    padding: 12px 18px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: white;
+    box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+    animation: fadeInUp 0.4s ease;
+    transition: opacity 0.5s ease;
+}
+
+.flash.success { background: #2ecc71; }  /* green */
+.flash.error   { background: #e74c3c; }  /* red */
+.flash.info    { background: #3498db; }  /* blue */
+
+
+/* Sliding Forms */
+.form-wrapper {
+    width: 200%;
+    display: flex;
+    transition: transform 0.6s ease;
+    transform: translateX(0);
+}
+
+.form-wrapper.show-register {
+    transform: translateX(-50%);
+}
+
+.form-panel {
+    width: 50%;
+    padding: 20px;
+    flex-shrink: 0;
+    transition: opacity 0.4s ease;
+}
+
+.login-panel {
+    animation: fadeIn 0.6s ease;
+}
+
+.register-panel {
+    animation: fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Form Wrapper (sliding) */
+.form-wrapper {
+    display: flex;
+    width: 200%;
+    transition: transform 0.6s ease;
+    transform: translateX(0);
+}
+
+.form-wrapper.show-register {
+    transform: translateX(-50%);
+}
+
+/* Each Panel */
+.form-panel {
+    width: 50%;
+    padding: 30px 25px;
+    flex-shrink: 0;
+    transition: opacity 0.4s ease;
+}
+
+.form-panel h2 {
+    margin-bottom: 20px;
+    color: #0077b6;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+/* Make inputs/buttons inside panels look nice */
+.form-panel input,
+.form-panel select,
+.form-panel textarea {
+    width: 100%;
+    padding: 12px 14px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.form-panel input:focus,
+.form-panel select:focus,
+.form-panel textarea:focus {
+    border-color: #0096c7;
+    background: #fff;
+    box-shadow: 0 0 6px rgba(0, 150, 199, 0.3);
+    outline: none;
+}
+
+.form-panel button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0077b6, #0096c7);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.form-panel button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 119, 182, 0.3);
+}
+
+.toggle-link {
+    display: block;
+    margin-top: 15px;
+    color: #0077cc;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.3s;
+}
+
+.toggle-link:hover {
+    color: #005fa3;
+    text-decoration: underline;
 }
 

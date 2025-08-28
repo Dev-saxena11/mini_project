@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traveltogether-groups</title>
+    <title>Travel Together</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="navbar">
-        <div class="logo">
-            <p>Travel Together</p>
+        <div class="logo">Travel Together</div>
+        <div class="menu-toggle" id="menu-toggle">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
         </div>
         <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
@@ -17,21 +20,58 @@
             <a href="/groups">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
-            
         </nav>
-        <div class="menu-toggle" id="menu-toggle">
-            <div class="bar"></div>
-            <div class="bar"></div>
-            <div class="bar"></div>
-        </div>
     </header>
+
     <main>
-        
-    </main>
-    <footer>
-        <div class="main-contain">
-            <p>&copy; 2025 Mini Project</p>
+        <div class="groups-container">
+            <h2>Available Groups</h2>
+
+            <form method="POST" action="/groups" class="group-form">
+                <input type="text" name="group_name" placeholder="Group Name" required>
+                <select name="group_type" required>
+                    <option value="Public">Public</option>
+                    <option value="Private">Private</option>
+                </select>
+                <textarea name="group_description" placeholder="Group Description"></textarea>
+                <button type="submit">➕ Create Group</button>
+            </form>
+
+            {% if groups %}
+                <ul class="group-list">
+                    {% for group in groups %}
+                        <li class="group-item">
+                            <strong>{{ group['group_name'] }} ({{ group['group_type'] }})</strong>
+                            <p><strong>Owner:</strong> {{ group['owner_name'] }}</p>
+                            <p><strong>Members:</strong> {{ group['member_count'] }}</p>
+                            <p>{{ group['group_description'] or "No description" }}</p>
+                            <div>
+                                <a href="/groups/join/{{ group['group_id'] }}" class="group-item-link">👉 Join</a>
+                                {% if user['username'] == group['owner_name'] %}
+                                    <a href="/groups/delete/{{ group['group_id'] }}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this group?');">🗑️ Delete</a>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <a href="/groups/leave" class="leave-btn">🚪 Leave Current Group</a>
+            {% else %}
+                <p>No groups available yet.</p>
+            {% endif %}
         </div>
+    </main>
+
+    <footer>
+        <p>© 2025 Mini Project</p>
     </footer>
+
+    <script>
+        // JavaScript for mobile menu toggle
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.getElementById('nav-links');
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+    </script>
 </body>
 </html>
