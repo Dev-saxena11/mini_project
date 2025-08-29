@@ -842,10 +842,23 @@
 
 /* group chat styling  */
 
+/* In style.css */
 .group-chat-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+    font-family: 'Poppins', sans-serif;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    
+    /* --- CHANGES --- */
+    max-width: 700px; /* Increase max-width for larger screens */
+    width: 95%;       /* Ensure it doesn't touch screen edges on small screens */
+    height: 80vh;     /* Make it 80% of the viewport's height */
+    max-height: 700px; /* Optional: prevent it from being too tall */
+
+    margin: 40px auto;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .group-chat-messages {
@@ -854,6 +867,7 @@
     height: 400px;
     overflow-y: auto;
     margin-bottom: 10px;
+    scroll-behavior: smooth;
 }
 
 .group-chat-message {
@@ -918,6 +932,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    scroll-behavior: smooth;
     overflow-y: auto; /* Enables scrolling */
     min-height: 400px; /* Or a height you prefer */
 }
@@ -1043,4 +1058,49 @@
     font-weight: 500;
     padding: 5px 12px;
     border-radius: 12px;
+}
+
+/* --- Message Bubble Tails --- */
+.group-chat-message {
+    position: relative; /* Required for the tail positioning */
+}
+
+/* Tail for OTHER users' messages */
+.other-message .group-chat-message::after {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 10px;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-right-color: #f1f0f0; /* Must match the bubble background */
+    border-left: 0;
+}
+
+/* Tail for YOUR messages */
+.own-message .group-chat-message::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 10px;
+    width: 0;
+    height: 0;
+    border: 10px solid transparent;
+    border-left-color: #007bff; /* Must match the bubble background */
+    border-right: 0;
+}
+
+/* --- Avatar Styling --- */
+.message-container {
+    display: flex;
+    align-items: flex-start; /* Aligns avatar with the top of the bubble */
+    gap: 10px; /* Space between avatar and bubble */
+}
+
+.chat-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-top: 5px;
 }

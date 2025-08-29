@@ -98,18 +98,21 @@
         const messageContainer = document.createElement('div');
         const messageClass = msg.sender_name === loggedInUsername ? 'own-message' : 'other-message';
         messageContainer.className = `message-container ${messageClass}`;
-        if (animate) {
-            messageContainer.style.animation = 'slideIn 0.3s ease-out';
-        }
+    
+        // Create avatar HTML only for other users
+        const avatarHTML = messageClass === 'other-message' 
+            ? `<img src="https://placehold.co/40x40/EFEFEF/333333?text=${msg.sender_name.charAt(0)}" alt="Avatar" class="chat-avatar">`
+            : '';
 
         messageContainer.innerHTML = `
+            ${avatarHTML}
             <div class="group-chat-message">
                 <strong>${msg.sender_name}</strong>
                 <p>${escapeHTML(msg.message)}</p>
                 <small>${formatSimpleTime(msg.timestamp)}</small>
             </div>
         `;
-        
+    
         messagesDiv.appendChild(messageContainer);
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
