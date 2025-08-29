@@ -90,6 +90,17 @@ def setup_database():
     );
     """
     cursor.execute(create_group_members_table_query)
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS GroupMessages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            group_id TEXT,
+            sender_id TEXT,
+            message TEXT NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (group_id) REFERENCES Groups (group_id) ON DELETE CASCADE,
+            FOREIGN KEY (sender_id) REFERENCES Users (userid) ON DELETE CASCADE
+        );
+    ''')
 
     print("Database and tables are ready.")
     conn.commit()
@@ -202,6 +213,18 @@ def add_group(group_name, group_type, owner_id, group_description=None):
         return None
     finally:
         conn.close()
+
+def add_group_message(group_id, sender_id, message):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO GroupMessages (group_id, sender_id, message) VALUES (?, ?, ?)",
+        (group_id, sender_id, message)
+    )
+    conn.commit()
+    conn.close()
+    return True
+
 
 def delete_group(group_id):
     """Deletes a group from the Groups table by its ID."""

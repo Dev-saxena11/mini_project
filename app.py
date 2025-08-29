@@ -28,9 +28,15 @@ def groups():
     # Get user info
     conn = database.get_db_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM Users WHERE username=?", (username,))
+
+    # Get user ID
+    cursor.execute("SELECT userid FROM Users WHERE username=?", (username,))
     user = cursor.fetchone()
-    conn.close()
+    user_id = user['userid']
+
+    # cursor.execute("SELECT * FROM Users WHERE username=?", (username,))
+    # user = cursor.fetchone()
+    # conn.close()
 
     # Handle group creation
     if request.method == "POST":
@@ -54,10 +60,11 @@ def groups():
     cursor = conn.cursor()
     cursor.execute("""
         SELECT g.group_id, g.group_name, g.group_type, g.group_description,
-               u.username as owner_name, g.member_count
+               u.username AS owner_name, g.member_count,CASE WHEN gm.user_id=?THEN 1 ELSE 0 END AS is_member
         FROM Groups g 
         JOIN Users u ON g.owner_id = u.userid
-    """)
+        LEFT JOIN GroupMembers gm ON g.group_id = gm.group_id AND gm.user_id = ?
+    """, (user_id, user_id))
     groups = cursor.fetchall()
     conn.close()
 
@@ -78,9 +85,11 @@ def join_group(group_id):
 
     if database.join_group(user['userid'], group_id):
         flash("✅ Successfully joined the group!")
+        return redirect(f"/groups/chat/{group_id}")
     else:
         flash("❌ Could not join the group.")
-    return redirect("/groups")
+        return redirect("/groups")
+
 
 @app.route('/groups/delete/<group_id>')
 def delete_group(group_id):
@@ -109,6 +118,91 @@ def delete_group(group_id):
     
     conn.close()
     return redirect("/groups")
+
+# Route for INCOMING MESSAGES (receives data from JavaScript)
+@app.route('/api/messages/send/<group_id>', methods=['POST'])
+def send_message_api(group_id):
+    username = session.get("username")
+    if not username:
+        return {"status": "error", "message": "Not logged in"}, 401
+
+    conn = database.get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT userid FROM Users WHERE username=?", (username,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if not user:
+        return {"status": "error", "message": "User not found"}, 404
+
+    data = request.json
+    message = data.get('message')
+    if not message:
+        return {"status": "error", "message": "Message is empty"}, 400
+
+    # Save the message to the database
+    database.add_group_message(group_id, user['userid'], message)
+
+    # Return a success response with data for the new message bubble
+    from datetime import datetime
+    return {
+        "status": "success",
+        "message": {
+            "sender_name": username,
+            "message": message,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        }
+    }
+
+
+# Route for LOADING THE CHAT PAGE (only handles GET requests now)
+@app.route('/groups/chat/<group_id>', methods=['GET'])
+def group_chat(group_id):
+    username = session.get("username")
+    if not username:
+        flash("⚠️ You must be logged in to access group chat.")
+        return redirect("/auth")
+
+    conn = database.get_db_connection()
+    cursor = conn.cursor()
+
+    # Get user info
+    cursor.execute("SELECT userid FROM Users WHERE username=?", (username,))
+    user = cursor.fetchone()
+
+    # Check if user is a member of this group
+    cursor.execute("SELECT 1 FROM GroupMembers WHERE group_id = ? AND user_id = ?", (group_id, user['userid']))
+    if not cursor.fetchone():
+        flash("⚠️ You are not a member of this group.")
+        conn.close()
+        return redirect("/groups")
+
+    # Fetch group info
+    cursor.execute("SELECT group_name FROM Groups WHERE group_id=?", (group_id,))
+    group = cursor.fetchone()
+
+    # Fetch all messages
+    cursor.execute("""
+    SELECT m.message, m.timestamp, u.username AS sender_name
+    FROM GroupMessages m JOIN Users u ON m.sender_id = u.userid
+    WHERE m.group_id = ? ORDER BY m.timestamp ASC
+""", (group_id,))
+
+    # Fetch the special 'Row' objects
+    db_rows = cursor.fetchall()
+    conn.close()
+
+    # CONVERT the 'Row' objects into a list of standard dictionaries
+    messages = [dict(row) for row in db_rows]
+
+    return render_template(
+        "group_chat.html",
+        group_id=group_id,
+        group_name=group['group_name'],
+        messages=messages,
+        username=username
+    )
+
 
 @app.route('/groups/leave')
 def leave_group():
