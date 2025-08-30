@@ -40,8 +40,8 @@ def setup_database():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Users table with current_group_id column
-    create_users_table_query = """
+    # Users table
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS Users (
         userid TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
@@ -55,12 +55,11 @@ def setup_database():
         current_group_id TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (current_group_id) REFERENCES Groups (group_id) ON DELETE SET NULL
-    );
-    """
-    cursor.execute(create_users_table_query)
+    )
+    """)
 
-    # Groups table with member_count and member_list
-    create_groups_table_query = """
+    # Groups table
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS Groups (
         group_id TEXT PRIMARY KEY,
         group_name TEXT NOT NULL,
@@ -71,12 +70,11 @@ def setup_database():
         member_list TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY (owner_id) REFERENCES Users (userid) ON DELETE CASCADE
-    );
-    """
-    cursor.execute(create_groups_table_query)
+    )
+    """)
 
-    # GroupMembers table for detailed membership tracking
-    create_group_members_table_query = """
+    # GroupMembers table
+    cursor.execute("""
     CREATE TABLE IF NOT EXISTS GroupMembers (
         member_id TEXT PRIMARY KEY,
         group_id TEXT NOT NULL,
@@ -87,13 +85,26 @@ def setup_database():
         FOREIGN KEY (group_id) REFERENCES Groups (group_id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES Users (userid) ON DELETE CASCADE,
         UNIQUE(group_id, user_id)
-    );
-    """
-    cursor.execute(create_group_members_table_query)
+    )
+    """)
 
-    print("Database and tables are ready.")
+    # ✅ GroupMessages table (missing earlier)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS GroupMessages (
+        message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        group_id TEXT NOT NULL,
+        sender_id TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (group_id) REFERENCES Groups (group_id) ON DELETE CASCADE,
+        FOREIGN KEY (sender_id) REFERENCES Users (userid) ON DELETE CASCADE
+    )
+    """)
+
     conn.commit()
     conn.close()
+    print("Database and tables are ready.")
+
 
 def add_user(username, password, email, **kwargs):
     """Adds a new user to the Users table with a generated ID."""
@@ -431,6 +442,44 @@ def get_user_group(user_id):
         return None
     finally:
         conn.close()
+
+def add_group_message(group_id, sender_id, message):
+    """Adds a message to the GroupMessages table."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO GroupMessages (group_id, sender_id, message)
+            VALUES (?, ?, ?)
+        """, (group_id, sender_id, message))
+        conn.commit()
+        return True
+    except sqlite3.Error as e:
+        print(f"ERROR: Could not add group message. {e}")
+        return False
+    finally:
+        conn.close()
+
+
+def get_group_messages(group_id):
+    """Returns all messages of a group with sender names."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT m.message_id, m.message, m.timestamp, u.username AS sender_name
+            FROM GroupMessages m
+            JOIN Users u ON m.sender_id = u.userid
+            WHERE m.group_id = ?
+            ORDER BY m.timestamp ASC
+        """, (group_id,))
+        return cursor.fetchall()
+    except sqlite3.Error as e:
+        print(f"ERROR: Could not fetch group messages. {e}")
+        return []
+    finally:
+        conn.close()
+
 
 def main():
     """Main function to run the interactive command-line interface."""

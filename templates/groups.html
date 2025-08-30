@@ -39,22 +39,36 @@
 
             {% if groups %}
                 <ul class="group-list">
-                    {% for group in groups %}
-                        <li class="group-item">
-                            <strong>{{ group['group_name'] }} ({{ group['group_type'] }})</strong>
-                            <p><strong>Owner:</strong> {{ group['owner_name'] }}</p>
-                            <p><strong>Members:</strong> {{ group['member_count'] }}</p>
-                            <p>{{ group['group_description'] or "No description" }}</p>
-                            <div>
-                                <a href="/groups/join/{{ group['group_id'] }}" class="group-item-link">👉 Join</a>
-                                {% if user['username'] == group['owner_name'] %}
-                                    <a href="/groups/delete/{{ group['group_id'] }}" class="delete-btn" onclick="return confirm('Are you sure you want to delete this group?');">🗑️ Delete</a>
-                                {% endif %}
-                            </div>
-                        </li>
-                    {% endfor %}
-                </ul>
-                <a href="/groups/leave" class="leave-btn">🚪 Leave Current Group</a>
+    {% for group in groups %}
+        <li class="group-item">
+            <h3>{{ group['group_name'] }} <span class="type">({{ group['group_type'] }})</span></h3>
+            <p><strong>👤 Owner:</strong> {{ group['owner_name'] }}</p>
+            <p><strong>👥 Members:</strong> {{ group['member_count'] }}</p>
+            <p class="desc">{{ group['group_description'] or "No description" }}</p>
+
+            <div class="group-actions">
+                <a href="/groups/chat/{{ group['group_id'] }}" class="btn chat-btn">
+                    💬 Open Chat
+                </a>
+
+                {% if not group['is_member'] %}
+                    <a href="/groups/join/{{ group['group_id'] }}" class="btn join-btn">👉 Join</a>
+                {% endif %}
+
+                {% if user['username'] == group['owner_name'] %}
+                    <a href="/groups/delete/{{ group['group_id'] }}" 
+                       class="btn delete-btn"
+                       onclick="return confirm('Are you sure you want to delete this group?');">
+                       🗑️ Delete
+                    </a>
+                {% endif %}
+            </div>
+        </li>
+    {% endfor %}
+</ul>
+
+<a href="/groups/leave" class="btn leave-btn">🚪 Leave Current Group</a>
+
             {% else %}
                 <p>No groups available yet.</p>
             {% endif %}
