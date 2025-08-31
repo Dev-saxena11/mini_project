@@ -3,53 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login / Register</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.0/css/all.min.css">
 </head>
+<style>
+    *{
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Poppins, sans-serif;
+
+    }
+    body{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: #081b29;
+    }
+    .container{
+        position: relative;
+        width: 750px;
+        height: 450px;
+        background: transparent;
+        border: 2px solid #0ef;
+
+    }
+    .form-box{
+        position: absolute;
+        top: 0;
+        width: 50%;
+        height: 100%;
+        background: red;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .form-box h2{
+        font-size: 2.5rem;
+        color: #fff;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .input-box{
+        position: relative;
+        width: 100%;
+        height: 50px;
+        background: seagreen;
+        margin:25px 0 ;
+        
+    }
+    .input-box input{
+        
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        border: none;
+        outline: none;
+        border: 2px solid #fff;
+        color: #fff;
+    }
+    .input-box label{
+        position: absolute;
+        top: 50%;
+        left: 0px;
+        color: #fff;
+        font-size: 16px;
+        pointer-events: none;
+        transform: translateY(-50%);
+        transition: .5s;
+    }
+    .input-box i{
+        position: absolute;
+        top: 50%;
+        right: 0px;
+        color: #fff;
+        font-size: 20px;
+        transform: translateY(-50%);
+    }
+</style>
 <body>
-    <div class="auth-container">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <ul style="color: red; list-style:none; padding:0;">
-          {% for message in messages %}
-            <li>{{ message }}</li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
-    
-    <!-- Login Form -->
-    <div id="login-form">
-        <h2>Login</h2>
-        <form method="POST">
-            <input type="hidden" name="action" value="login">
-            <input type="text" name="username" placeholder="Username" required>
-            <input type="password" name="password" placeholder="Password" required>
-            <button type="submit">Login</button>
-        </form>
-        <span class="toggle-link" onclick="toggleForms()">Don’t have an account? Register</span>
-    </div>
+    <div class="container">
+        <div class="form-box">
+            <h2>Login</h2>
+            <form action="#">
+                <div class="input-box">
+                    <input type="text" required>
+                    <label>Username</label>
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div class="input-box">
+                    <input type="password" required>
+                    <label>password</label>
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <button type="submit" class="btn">Login</button>
+                <div class="dev">
+                    <p>Don't have an account? <a href="#">Register</a></p>
 
+                </div>
 
-        <!-- Register Form -->
-        <div id="register-form" class="hidden">
-            <h2>Register</h2>
-            <form method="POST">
-                <input type="hidden" name="action" value="register">
-                <input type="text" name="username" placeholder="Username" required>
-                <input type="email" name="email" placeholder="Email" required>
-                <input type="password" name="password" placeholder="Password" required>
-                <button type="submit">Register</button>
+               
             </form>
-            <span class="toggle-link" onclick="toggleForms()">Already have an account? Login</span>
         </div>
     </div>
-
-    <script>
-        function toggleForms() {
-            document.getElementById("login-form").classList.toggle("hidden");
-            document.getElementById("register-form").classList.toggle("hidden");
-        }
-    </script>
 </body>
 </html>
