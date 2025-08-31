@@ -23,6 +23,25 @@ def initialize_database():
     finally:
         conn.close()
 
+# --- HELPER FUNCTION TO VALIDATE USER SESSION ---
+def validate_user_session():
+    """Checks if the username in the session exists in the database."""
+    username = session.get("username")
+    if not username:
+        return None, None # No user in session
+
+    conn = database.get_db_connection()
+    user = conn.execute("SELECT * FROM Users WHERE username=?", (username,)).fetchone()
+    
+    if not user:
+        # User in session does not exist in DB, clear session
+        session.pop("username", None)
+        flash("Your session was invalid. Please log in again.", "warning")
+        conn.close()
+        return None, None
+        
+    return conn, user
+
 # --- Main Routes ---
 
 @app.route('/')
@@ -31,20 +50,11 @@ def home():
     username = session.get("username")
     return render_template('home.html', username=username)
 
-@app.route('/about')
-def about():
-    username = session.get("username")
-    return render_template('about.html', username=username)
-
-@app.route('/travel')
-def travel():
-    username = session.get("username")
-    return render_template('travel.html', username=username)
-
 # --- Auth Routes ---
 
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
+    # ... (No changes in this route) ...
     show_register = False
     if request.method == "POST":
         action = request.form.get("action")
@@ -94,35 +104,27 @@ def logout():
 
 @app.route('/user')
 def user():
-    username = session.get("username")
-    if not username:
-        flash("⚠️ You must be logged in to view your dashboard.")
+    conn, user_data = validate_user_session()
+    if not user_data:
         return redirect("/auth")
-
-    conn = database.get_db_connection()
-    user_data = conn.execute("SELECT * FROM Users WHERE username=?", (username,)).fetchone()
-    conn.close()
     
     group_data = None
     members = []
-    if user_data and user_data['current_group_id']:
+    if user_data['current_group_id']:
         group_data = database.get_user_group(user_data['userid'])
         if group_data:
             members = database.get_group_members(group_data['group_id'])
-
+    
+    conn.close()
     return render_template("user.html", user=user_data, group=group_data, members=members)
 
 # --- Group Routes ---
 
 @app.route('/groups', methods=["GET", "POST"])
 def groups():
-    username = session.get("username")
-    if not username:
-        flash("⚠️ You must be logged in to manage groups.")
+    conn, user = validate_user_session()
+    if not user:
         return redirect("/auth")
-
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT * FROM Users WHERE username=?", (username,)).fetchone()
     
     if request.method == "POST":
         group_name = request.form.get("group_name")
@@ -138,12 +140,11 @@ def groups():
                 flash(f"✅ Group '{group_name}' created successfully!")
             else:
                 flash("❌ Could not create group. You may already be in one.")
+        conn.close()
         return redirect("/groups")
 
-    # Fetch destinations for the form dropdown
     destinations = database.get_all_destinations()
-
-    # Fetch all groups with destination names and check membership
+    
     groups_list = conn.execute("""
         SELECT g.*, u.username as owner_name, d.destination_name,
                CASE WHEN gm.user_id IS NOT NULL THEN 1 ELSE 0 END as is_member
@@ -152,18 +153,20 @@ def groups():
         LEFT JOIN Destinations d ON g.destination_id = d.destination_id
         LEFT JOIN GroupMembers gm ON g.group_id = gm.group_id AND gm.user_id = ?
     """, (user['userid'],)).fetchall()
+    
     conn.close()
-
     return render_template('groups.html', groups=groups_list, user=user, destinations=destinations)
 
+# Other routes are omitted for brevity but should also use validate_user_session()
+# The rest of your app.py file can remain the same...
+
+# --- Example of updating another route ---
 @app.route('/groups/join/<group_id>')
 def join_group(group_id):
-    username = session.get("username")
-    if not username: return redirect("/auth")
-
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT userid FROM Users WHERE username=?", (username,)).fetchone()
-    conn.close()
+    conn, user = validate_user_session()
+    if not user:
+        return redirect("/auth")
+    conn.close() # Connection is no longer needed here
 
     if database.join_group(user['userid'], group_id):
         flash("✅ Successfully joined the group!")
@@ -171,13 +174,21 @@ def join_group(group_id):
         flash("❌ Could not join group. It may be full or you're already in one.")
     return redirect("/groups")
 
+# --- Full app.py continues below ---
+@app.route('/about')
+def about():
+    username = session.get("username")
+    return render_template('about.html', username=username)
+
+@app.route('/travel')
+def travel():
+    username = session.get("username")
+    return render_template('travel.html', username=username)
+
 @app.route('/groups/leave')
 def leave_group():
-    username = session.get("username")
-    if not username: return redirect("/auth")
-
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT userid FROM Users WHERE username=?", (username,)).fetchone()
+    conn, user = validate_user_session()
+    if not user: return redirect("/auth")
     conn.close()
 
     if database.leave_group(user['userid']):
@@ -188,11 +199,9 @@ def leave_group():
 
 @app.route('/groups/delete/<group_id>')
 def delete_group(group_id):
-    username = session.get("username")
-    if not username: return redirect("/auth")
+    conn, user = validate_user_session()
+    if not user: return redirect("/auth")
 
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT userid FROM Users WHERE username=?", (username,)).fetchone()
     group = conn.execute("SELECT owner_id FROM Groups WHERE group_id=?", (group_id,)).fetchone()
     
     if not group or group['owner_id'] != user['userid']:
@@ -204,16 +213,11 @@ def delete_group(group_id):
     conn.close()
     return redirect("/groups")
 
-# --- Group Chat Routes --- (No changes needed here)
 @app.route('/groups/chat/<group_id>', methods=['GET'])
 def group_chat(group_id):
-    username = session.get("username")
-    if not username:
-        return redirect("/auth")
+    conn, user = validate_user_session()
+    if not user: return redirect("/auth")
 
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT userid FROM Users WHERE username=?", (username,)).fetchone()
-    
     is_member = conn.execute("SELECT 1 FROM GroupMembers WHERE group_id=? AND user_id=?", (group_id, user['userid'])).fetchone()
     if not is_member:
         flash("⚠️ You are not a member of this group.")
@@ -230,6 +234,7 @@ def group_chat(group_id):
     conn.close()
 
     messages = [dict(row) for row in db_rows]
+    username = user['username']
 
     return render_template(
         "group_chat.html",
@@ -241,16 +246,11 @@ def group_chat(group_id):
 
 @app.route('/api/messages/send/<group_id>', methods=['POST'])
 def send_message_api(group_id):
-    username = session.get("username")
-    if not username:
-        return jsonify({"status": "error", "message": "Not logged in"}), 401
-
-    conn = database.get_db_connection()
-    user = conn.execute("SELECT userid FROM Users WHERE username=?", (username,)).fetchone()
-    conn.close()
+    conn, user = validate_user_session()
     if not user:
-        return jsonify({"status": "error", "message": "User not found"}), 404
-
+        return jsonify({"status": "error", "message": "Not logged in"}), 401
+    conn.close()
+    
     data = request.json
     message = data.get('message')
     if not message:
@@ -262,7 +262,7 @@ def send_message_api(group_id):
     return jsonify({
         "status": "success",
         "message": {
-            "sender_name": username,
+            "sender_name": user['username'],
             "message": message,
             "timestamp": datetime.now().isoformat()
         }
