@@ -195,8 +195,6 @@ def group_chat(group_id):
         username=username
     )
 
-
-
 @app.route('/groups/leave')
 def leave_group():
     username = session.get("username")
