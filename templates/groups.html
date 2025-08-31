@@ -33,12 +33,14 @@
                     <option value="Public">Public</option>
                     <option value="Private">Private</option>
                 </select>
-                <select name="destination_id" required>
-                    <option value="" disabled selected>Select a Destination</option>
+                
+                <input list="destinations-list" name="destination_name" placeholder="Type or select a destination" required autocomplete="off">
+                <datalist id="destinations-list">
                     {% for dest in destinations %}
-                        <option value="{{ dest.destination_id }}">{{ dest.destination_name }}</option>
+                        <option value="{{ dest.destination_name }}">
                     {% endfor %}
-                </select>
+                </datalist>
+
                 <textarea name="group_description" placeholder="Group Description (optional)"></textarea>
                 <button type="submit">➕ Create Group</button>
             </form>
@@ -80,7 +82,7 @@
                 {% endif %}
 
             {% else %}
-                <p>No groups available yet.</p>
+                <p>No groups available yet. Create one to get started!</p>
             {% endif %}
         </div>
     </main>

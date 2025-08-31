@@ -7,21 +7,10 @@ app.secret_key = "my_secret_123"
 
 # --- DB Initialization on Startup ---
 def initialize_database():
-    """Sets up DB and populates with sample data if it's empty."""
+    """Sets up DB tables if they don't exist."""
     database.setup_database()
-    conn = database.get_db_connection()
-    try:
-        user_count = conn.execute("SELECT COUNT(*) FROM Users").fetchone()[0]
-        if user_count == 0:
-            print("Database is empty. Populating with sample data...")
-            database.insert_sample_data()
-            print("Sample data has been inserted.")
-        else:
-            print("Database already contains data. Skipping sample data insertion.")
-    except Exception as e:
-        print(f"An error occurred during database initialization: {e}")
-    finally:
-        conn.close()
+    print("Database tables initialized.")
+
 
 # --- HELPER FUNCTION TO VALIDATE USER SESSION ---
 def validate_user_session():
@@ -54,7 +43,6 @@ def home():
 
 @app.route("/auth", methods=["GET", "POST"])
 def auth():
-    # ... (No changes in this route) ...
     show_register = False
     if request.method == "POST":
         action = request.form.get("action")
@@ -129,17 +117,25 @@ def groups():
     if request.method == "POST":
         group_name = request.form.get("group_name")
         group_type = request.form.get("group_type")
-        destination_id = request.form.get("destination_id")
+        # Get destination name from the text input
+        destination_name = request.form.get("destination_name")
         group_description = request.form.get("group_description")
 
-        if not all([group_name, group_type, destination_id]):
+        if not all([group_name, group_type, destination_name]):
             flash("⚠️ Group name, type, and destination are required.")
         else:
-            gid = database.add_group(group_name, group_type, user['userid'], destination_id, group_description)
-            if gid:
-                flash(f"✅ Group '{group_name}' created successfully!")
+            # Find or create the destination and get its ID
+            destination_id = database.find_or_create_destination(destination_name)
+            
+            if destination_id:
+                gid = database.add_group(group_name, group_type, user['userid'], destination_id, group_description)
+                if gid:
+                    flash(f"✅ Group '{group_name}' created successfully!")
+                else:
+                    flash("❌ Could not create group. You may already be in one.")
             else:
-                flash("❌ Could not create group. You may already be in one.")
+                flash("❌ Invalid destination name provided.")
+
         conn.close()
         return redirect("/groups")
 
@@ -157,24 +153,9 @@ def groups():
     conn.close()
     return render_template('groups.html', groups=groups_list, user=user, destinations=destinations)
 
-# Other routes are omitted for brevity but should also use validate_user_session()
-# The rest of your app.py file can remain the same...
 
-# --- Example of updating another route ---
-@app.route('/groups/join/<group_id>')
-def join_group(group_id):
-    conn, user = validate_user_session()
-    if not user:
-        return redirect("/auth")
-    conn.close() # Connection is no longer needed here
+# --- All other routes remain the same ---
 
-    if database.join_group(user['userid'], group_id):
-        flash("✅ Successfully joined the group!")
-    else:
-        flash("❌ Could not join group. It may be full or you're already in one.")
-    return redirect("/groups")
-
-# --- Full app.py continues below ---
 @app.route('/about')
 def about():
     username = session.get("username")
@@ -184,6 +165,19 @@ def about():
 def travel():
     username = session.get("username")
     return render_template('travel.html', username=username)
+
+@app.route('/groups/join/<group_id>')
+def join_group(group_id):
+    conn, user = validate_user_session()
+    if not user:
+        return redirect("/auth")
+    conn.close() 
+
+    if database.join_group(user['userid'], group_id):
+        flash("✅ Successfully joined the group!")
+    else:
+        flash("❌ Could not join group. It may be full or you're already in one.")
+    return redirect("/groups")
 
 @app.route('/groups/leave')
 def leave_group():

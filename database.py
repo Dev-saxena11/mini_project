@@ -120,7 +120,6 @@ def setup_database():
 # --- USER MANAGEMENT ---
 
 def add_user(username, password, email, **kwargs):
-    """Adds a new user to the Users table."""
     is_valid, message = validate_password(password)
     if not is_valid: return None
     if not validate_email(email): return None
@@ -149,6 +148,42 @@ def get_all_destinations():
     destinations = conn.execute("SELECT * FROM Destinations ORDER BY destination_name ASC").fetchall()
     conn.close()
     return destinations
+
+def find_or_create_destination(name):
+    """
+    Finds a destination by name. If it doesn't exist, creates it.
+    Returns the destination_id.
+    """
+    if not name or not name.strip():
+        return None
+        
+    clean_name = name.strip().title()
+    conn = get_db_connection()
+    
+    try:
+        # Check if destination exists
+        cursor = conn.cursor()
+        cursor.execute("SELECT destination_id FROM Destinations WHERE destination_name = ?", (clean_name,))
+        result = cursor.fetchone()
+        
+        if result:
+            return result['destination_id']
+        else:
+            # Create it if it doesn't exist
+            new_id = generate_id()
+            # For simplicity, we'll add a placeholder country for now
+            cursor.execute(
+                "INSERT INTO Destinations (destination_id, destination_name, country) VALUES (?, ?, ?)",
+                (new_id, clean_name, "Unknown")
+            )
+            conn.commit()
+            return new_id
+    except sqlite3.Error as e:
+        print(f"Database error in find_or_create_destination: {e}")
+        return None
+    finally:
+        conn.close()
+
 
 # --- GROUP MANAGEMENT ---
 
@@ -299,55 +334,5 @@ def add_group_message(group_id, sender_id, message):
         return True
     except sqlite3.Error:
         return False
-    finally:
-        conn.close()
-
-# --- SAMPLE DATA GENERATION ---
-
-def insert_sample_data():
-    """Inserts comprehensive sample data into the database."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        # Sample Destinations
-        destinations = [
-            ("Goa", "India"), ("Paris", "France"), ("Kyoto", "Japan"),
-            ("Cairo", "Egypt"), ("Rome", "Italy"), ("Jaipur", "India")
-        ]
-        dest_ids = {}
-        for name, country in destinations:
-            dest_id = generate_id()
-            dest_ids[name] = dest_id
-            cursor.execute(
-                "INSERT OR IGNORE INTO Destinations (destination_id, destination_name, country) VALUES (?, ?, ?)",
-                (dest_id, name, country)
-            )
-
-        # Sample Users
-        users_data = [
-            ('alice', 'Pass@123', 'alice.w@email.com', '9876543210', 'Female', 'Single', 'Adventure seeker!'),
-            ('bob', 'Travel@456', 'bob.e@email.com', '9876543211', 'Male', 'Married', 'Nature lover.'),
-            ('carol', 'Journey@789', 'carol.b@email.com', '9876543212', 'Female', 'Single', 'Blogger and backpacker.'),
-        ]
-        user_ids = {}
-        for username, password, email, phone, gender, marital, bio in users_data:
-            user_id = add_user(username, password, email, phone_no=phone, gender=gender, marital_status=marital, bio=bio)
-            if user_id:
-                user_ids[username] = user_id
-        
-        # Sample Groups with Destinations
-        alice_id = user_ids.get('alice')
-        bob_id = user_ids.get('bob')
-        
-        group1_id = add_group("Goa Beach Paradise", "Public", alice_id, dest_ids['Goa'], "Exploring North Goa beaches!")
-        group2_id = add_group("Eiffel Tower Explorers", "Private", bob_id, dest_ids['Paris'], "A cultural trip to Paris.")
-
-        join_group(user_ids.get('carol'), group1_id)
-        add_group_message(group1_id, alice_id, "Hey everyone! So excited for our Goa trip! 🌴")
-
-        conn.commit()
-        print("Sample data inserted successfully.")
-    except Exception as e:
-        print(f"Error inserting sample data: {e}")
     finally:
         conn.close()
