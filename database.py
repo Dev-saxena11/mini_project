@@ -91,6 +91,21 @@ def setup_database():
     """
     cursor.execute(create_group_members_table_query)
 
+    # GroupMessages table for storing group chats
+    create_group_messages_table_query = """
+    CREATE TABLE IF NOT EXISTS GroupMessages (
+        message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+        group_id TEXT NOT NULL,
+        sender_id TEXT NOT NULL,
+        sender_username TEXT NOT NULL,
+        message TEXT NOT NULL,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (group_id) REFERENCES Groups (group_id) ON DELETE CASCADE,
+        FOREIGN KEY (sender_id) REFERENCES Users (userid) ON DELETE CASCADE
+    );
+    """
+    cursor.execute(create_group_messages_table_query)
+
     print("Database and tables are ready.")
     conn.commit()
     conn.close()
@@ -142,7 +157,7 @@ def delete_user(user_id):
         if user_data and user_data['current_group_id']:
             leave_group(user_id)
         
-        # Delete the user
+        # Delete the user (messages will be deleted due to CASCADE)
         cursor.execute("DELETE FROM Users WHERE userid = ?", (user_id,))
         if cursor.rowcount == 0:
             print(f"ERROR: No user found with ID '{user_id}'.")
@@ -212,13 +227,13 @@ def delete_group(group_id):
         # Update all users in this group to have no current group
         cursor.execute("UPDATE Users SET current_group_id = NULL WHERE current_group_id = ?", (group_id,))
         
-        # Delete the group (GroupMembers will be deleted due to CASCADE)
+        # Delete the group (GroupMembers and GroupMessages will be deleted due to CASCADE)
         cursor.execute("DELETE FROM Groups WHERE group_id = ?", (group_id,))
         if cursor.rowcount == 0:
             print(f"ERROR: No group found with ID '{group_id}'.")
         else:
             conn.commit()
-            print(f"SUCCESS: Group with ID '{group_id}' deleted.")
+            print(f"SUCCESS: Group with ID '{group_id}' deleted along with all messages.")
     except sqlite3.Error as e:
         print(f"ERROR: Could not delete group. {e}")
     finally:
@@ -330,6 +345,99 @@ def leave_group(user_id):
     except sqlite3.Error as e:
         print(f"ERROR: Could not leave group. {e}")
         return False
+    finally:
+        conn.close()
+
+def send_message(sender_id, group_id, message):
+    """Sends a message to a group chat."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Check if sender exists and get username
+        cursor.execute("SELECT username, current_group_id FROM Users WHERE userid = ?", (sender_id,))
+        sender_data = cursor.fetchone()
+        if not sender_data:
+            print(f"ERROR: Sender with ID '{sender_id}' does not exist.")
+            return False
+            
+        sender_username = sender_data['username']
+        
+        # Check if group exists
+        cursor.execute("SELECT group_id FROM Groups WHERE group_id = ?", (group_id,))
+        if not cursor.fetchone():
+            print(f"ERROR: Group with ID '{group_id}' does not exist.")
+            return False
+            
+        # Check if sender is a member of the group
+        cursor.execute("SELECT * FROM GroupMembers WHERE group_id = ? AND user_id = ?", (group_id, sender_id))
+        if not cursor.fetchone():
+            print("ERROR: You must be a member of the group to send messages.")
+            return False
+            
+        # Insert the message
+        conn.execute(
+            "INSERT INTO GroupMessages (group_id, sender_id, sender_username, message) VALUES (?, ?, ?, ?)",
+            (group_id, sender_id, sender_username, message)
+        )
+        
+        conn.commit()
+        print(f"SUCCESS: Message sent to group.")
+        return True
+    except sqlite3.Error as e:
+        print(f"ERROR: Could not send message. {e}")
+        return False
+    finally:
+        conn.close()
+
+def get_group_messages(group_id, limit=50):
+    """Retrieves recent messages from a group chat."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT message_id, sender_username, message, timestamp
+            FROM GroupMessages 
+            WHERE group_id = ?
+            ORDER BY timestamp DESC
+            LIMIT ?
+        """, (group_id, limit))
+        
+        messages = cursor.fetchall()
+        return list(reversed(messages))  # Return in chronological order
+    except sqlite3.Error as e:
+        print(f"ERROR: Could not retrieve messages. {e}")
+        return []
+    finally:
+        conn.close()
+
+def view_group_chat(group_id):
+    """Displays recent messages from a group chat."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        
+        # Get group name
+        cursor.execute("SELECT group_name FROM Groups WHERE group_id = ?", (group_id,))
+        group_data = cursor.fetchone()
+        if not group_data:
+            print(f"ERROR: Group with ID '{group_id}' does not exist.")
+            return
+            
+        print(f"\n--- Chat for Group: {group_data['group_name']} ---")
+        
+        messages = get_group_messages(group_id, 20)  # Last 20 messages
+        
+        if not messages:
+            print("No messages in this group yet.")
+            return
+            
+        for msg in messages:
+            timestamp = msg['timestamp'][:19]  # Remove microseconds
+            print(f"[{timestamp}] {msg['sender_username']}: {msg['message']}")
+            
+    except sqlite3.Error as e:
+        print(f"ERROR: Could not view chat. {e}")
     finally:
         conn.close()
 
@@ -446,9 +554,11 @@ def main():
         print("6. View Groups")
         print("7. Join Group")
         print("8. Leave Group")
-        print("9. Exit")
+        print("9. Send Message")
+        print("10. View Group Chat")
+        print("11. Exit")
         
-        choice = input("Enter your choice (1-9): ").strip()
+        choice = input("Enter your choice (1-11): ").strip()
         
         if choice == '1':
             print("\n--- Add New User ---")
@@ -511,11 +621,23 @@ def main():
             leave_group(user_id)
             
         elif choice == '9':
+            print("\n--- Send Message ---")
+            sender_id = input("Enter your userid: ").strip()
+            group_id = input("Enter the group_id: ").strip()
+            message = input("Enter your message: ").strip()
+            send_message(sender_id, group_id, message)
+            
+        elif choice == '10':
+            print("\n--- View Group Chat ---")
+            group_id = input("Enter the group_id: ").strip()
+            view_group_chat(group_id)
+            
+        elif choice == '11':
             print("Exiting... Have a great day!")
             break
             
         else:
-            print("Invalid choice. Please enter a number between 1-9.")
+            print("Invalid choice. Please enter a number between 1-11.")
 
 if __name__ == "__main__":
     main()
