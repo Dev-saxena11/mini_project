@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Together</title>
+    <title>Travel Together - Groups</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="navbar">
         <div class="logo">Travel Together</div>
-        <div class="menu-toggle" id="menu-toggle">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
-        </div>
         <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
             <a href="/user">User Dashboard</a>
@@ -21,53 +16,68 @@
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
         </nav>
+        <div class="menu-toggle" id="menu-toggle">
+            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        </div>
     </header>
 
     <main>
         <div class="groups-container">
             <h2>Available Groups</h2>
 
+            {% if not user.current_group_id %}
             <form method="POST" action="/groups" class="group-form">
                 <input type="text" name="group_name" placeholder="Group Name" required>
                 <select name="group_type" required>
+                    <option value="" disabled selected>Select Group Type</option>
                     <option value="Public">Public</option>
                     <option value="Private">Private</option>
                 </select>
-                <textarea name="group_description" placeholder="Group Description"></textarea>
+                <select name="destination_id" required>
+                    <option value="" disabled selected>Select a Destination</option>
+                    {% for dest in destinations %}
+                        <option value="{{ dest.destination_id }}">{{ dest.destination_name }}</option>
+                    {% endfor %}
+                </select>
+                <textarea name="group_description" placeholder="Group Description (optional)"></textarea>
                 <button type="submit">➕ Create Group</button>
             </form>
+            {% else %}
+            <p class="info-box">You are already in a group. Leave your current group to create a new one.</p>
+            {% endif %}
 
             {% if groups %}
                 <ul class="group-list">
-    {% for group in groups %}
-        <li class="group-item">
-            <h3>{{ group['group_name'] }} <span class="type">({{ group['group_type'] }})</span></h3>
-            <p><strong>👤 Owner:</strong> {{ group['owner_name'] }}</p>
-            <p><strong>👥 Members:</strong> {{ group['member_count'] }}</p>
-            <p class="desc">{{ group['group_description'] or "No description" }}</p>
+                    {% for group in groups %}
+                        <li class="group-item">
+                            <h3>{{ group['group_name'] }} <span class="type">({{ group['group_type'] }})</span></h3>
+                            <p><strong>📍 Destination:</strong> {{ group['destination_name'] or 'Not specified' }}</p>
+                            <p><strong>👤 Owner:</strong> {{ group['owner_name'] }}</p>
+                            <p><strong>👥 Members:</strong> {{ group['member_count'] }}</p>
+                            <p class="desc">{{ group['group_description'] or "No description" }}</p>
 
-            <div class="group-actions">
-                <a href="/groups/chat/{{ group['group_id'] }}" class="btn chat-btn">
-                    💬 Open Chat
-                </a>
+                            <div class="group-actions">
+                                <a href="/groups/chat/{{ group['group_id'] }}" class="btn chat-btn">💬 Open Chat</a>
 
-                {% if not group['is_member'] %}
-                    <a href="/groups/join/{{ group['group_id'] }}" class="btn join-btn">👉 Join</a>
+                                {% if not group['is_member'] and not user.current_group_id %}
+                                    <a href="/groups/join/{{ group['group_id'] }}" class="btn join-btn">👉 Join</a>
+                                {% endif %}
+
+                                {% if user['username'] == group['owner_name'] %}
+                                    <a href="/groups/delete/{{ group['group_id'] }}" 
+                                       class="btn delete-btn"
+                                       onclick="return confirm('Are you sure you want to delete this group?');">
+                                       🗑️ Delete
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                {% if user.current_group_id and not user.is_group_owner %}
+                    <a href="/groups/leave" class="btn leave-btn">🚪 Leave Current Group</a>
                 {% endif %}
-
-                {% if user['username'] == group['owner_name'] %}
-                    <a href="/groups/delete/{{ group['group_id'] }}" 
-                       class="btn delete-btn"
-                       onclick="return confirm('Are you sure you want to delete this group?');">
-                       🗑️ Delete
-                    </a>
-                {% endif %}
-            </div>
-        </li>
-    {% endfor %}
-</ul>
-
-<a href="/groups/leave" class="btn leave-btn">🚪 Leave Current Group</a>
 
             {% else %}
                 <p>No groups available yet.</p>
@@ -80,7 +90,6 @@
     </footer>
 
     <script>
-        // JavaScript for mobile menu toggle
         const menuToggle = document.getElementById('menu-toggle');
         const navLinks = document.getElementById('nav-links');
         menuToggle.addEventListener('click', () => {
