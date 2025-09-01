@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Traveltogether-about</title>
+    <title>Travel Together - About Us</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -17,7 +17,6 @@
             <a href="/groups">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
-            
         </nav>
         <div class="menu-toggle" id="menu-toggle">
             <div class="bar"></div>
@@ -25,13 +24,61 @@
             <div class="bar"></div>
         </div>
     </header>
-    <main>
 
-    </main>
-    <footer>
-        <div class="main-contain">
-            <p>&copy; 2025 Mini Project</p>
+    <main>
+        <div class="about-container">
+            <h2>Meet the Creators</h2>
+            <p class="team-intro">We are a passionate team of developers who brought Travel Together to life. Get to know the minds behind the code.</p>
+            
+            <div class="team-grid">
+                <div class="team-card">
+                    <img src="/static/images/aryan.jpg" alt="Team member Aryan">
+                    <h3>Aryan</h3>
+                    <p class="role">The Vibe Coder</p>
+                    <p class="desc">Expertly crafting seamless user experiences and bringing positive energy to the development process.</p>
+                </div>
+
+                <div class="team-card">
+                    <img src="/static/images/rachit.jpg" alt="Team member Rachit">
+                    <h3>Rachit</h3>
+                    <p class="role">The Database Expert</p>
+                    <p class="desc">The architect of our data, ensuring everything is organized, efficient, and secure behind the scenes.</p>
+                </div>
+                
+                <div class="team-card">
+                    <img src="/static/images/anurag.jpg" alt="Team member Anurag">
+                    <h3>Anurag</h3>
+                    <p class="role">The Frontend Specialist</p>
+                    <p class="desc">Bringing the user interface to life with clean, intuitive designs and responsive layouts.</p>
+                </div>
+
+                <div class="team-card">
+                    <img src="/static/images/dev.jpg" alt="Team member Dev">
+                    <h3>Dev</h3>
+                    <p class="role">The AI Expert</p>
+                    <p class="desc">Powering our smart features, including the intelligent Travel Assistant you interact with.</p>
+                </div>
+
+                <div class="team-card">
+                    <img src="/static/images/rudra.jpg" alt="Team member Rudra">
+                    <h3>Rudra</h3>
+                    <p class="role">The Backend Expert</p>
+                    <p class="desc">The mastermind behind our server-side logic, making sure the application runs smoothly and reliably.</p>
+                </div>
+            </div>
         </div>
+    </main>
+    
+    <footer>
+        <p>© 2025 Mini Project</p>
     </footer>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.getElementById('nav-links');
+        menuToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+    </script>
 </body>
 </html>
