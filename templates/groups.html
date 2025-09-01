@@ -33,7 +33,7 @@
 
             {% if not user.current_group_id %}
             <div class="dashboard-card" style="margin-bottom: 40px;">
-                <h3 style="text-align: center; margin-bottom: 20px;">Create a New Adventure</h3>
+                <h3 style="text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: var(--primary-color);">Create a New Adventure</h3>
                 <form method="POST" action="/groups" class="group-form">
                     <input type="text" name="group_name" placeholder="Group Name" required>
                     <select name="group_type" required>
@@ -54,7 +54,7 @@
                 </form>
             </div>
             {% else %}
-            <div class="info-box" style="text-align:center; margin-bottom: 40px;">
+            <div class="info-box">
                 <p>You are in a group. Leave your current group to create or join a new one.</p>
                 {% if not user.is_group_owner %}
                     <a href="/groups/leave" class="btn delete-btn" style="margin-top: 15px;">🚪 Leave Current Group</a>
@@ -90,7 +90,6 @@
                         </li>
                     {% endfor %}
                 </ul>
-
             {% else %}
                 <div class="no-group-info">
                      <h3>No groups available yet.</h3>
