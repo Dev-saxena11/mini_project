@@ -12,9 +12,15 @@
         <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
             <a href="/user">User Dashboard</a>
-            <a href="/groups">Groups</a>
+            <a href="/groups" class="active">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
+            {% if username %}
+               <span style="margin-left: 15px;">👋 Hello, {{ username }}</span>
+               <a href="/logout">Logout</a>
+            {% else %}
+               <a href="/auth">Login / Register</a>
+            {% endif %}
         </nav>
         <div class="menu-toggle" id="menu-toggle">
             <span class="bar"></span><span class="bar"></span><span class="bar"></span>
@@ -23,29 +29,37 @@
 
     <main>
         <div class="groups-container">
-            <h2>Available Groups</h2>
+            <h2>✈️ Find Your Group</h2>
 
             {% if not user.current_group_id %}
-            <form method="POST" action="/groups" class="group-form">
-                <input type="text" name="group_name" placeholder="Group Name" required>
-                <select name="group_type" required>
-                    <option value="" disabled selected>Select Group Type</option>
-                    <option value="Public">Public</option>
-                    <option value="Private">Private</option>
-                </select>
-                
-                <input list="destinations-list" name="destination_name" placeholder="Type or select a destination" required autocomplete="off">
-                <datalist id="destinations-list">
-                    {% for dest in destinations %}
-                        <option value="{{ dest.destination_name }}">
-                    {% endfor %}
-                </datalist>
+            <div class="dashboard-card" style="margin-bottom: 40px;">
+                <h3 style="text-align: center; margin-bottom: 20px;">Create a New Adventure</h3>
+                <form method="POST" action="/groups" class="group-form">
+                    <input type="text" name="group_name" placeholder="Group Name" required>
+                    <select name="group_type" required>
+                        <option value="" disabled selected>Select Group Type</option>
+                        <option value="Public">Public</option>
+                        <option value="Private">Private</option>
+                    </select>
+                    
+                    <input list="destinations-list" name="destination_name" placeholder="Type or select a destination" required autocomplete="off">
+                    <datalist id="destinations-list">
+                        {% for dest in destinations %}
+                            <option value="{{ dest.destination_name }}">
+                        {% endfor %}
+                    </datalist>
 
-                <textarea name="group_description" placeholder="Group Description (optional)"></textarea>
-                <button type="submit">➕ Create Group</button>
-            </form>
+                    <textarea name="group_description" placeholder="Group Description (optional)"></textarea>
+                    <button type="submit">➕ Create Group</button>
+                </form>
+            </div>
             {% else %}
-            <p class="info-box">You are already in a group. Leave your current group to create a new one.</p>
+            <div class="info-box" style="text-align:center; margin-bottom: 40px;">
+                <p>You are in a group. Leave your current group to create or join a new one.</p>
+                {% if not user.is_group_owner %}
+                    <a href="/groups/leave" class="btn delete-btn" style="margin-top: 15px;">🚪 Leave Current Group</a>
+                {% endif %}
+            </div>
             {% endif %}
 
             {% if groups %}
@@ -77,12 +91,11 @@
                     {% endfor %}
                 </ul>
 
-                {% if user.current_group_id and not user.is_group_owner %}
-                    <a href="/groups/leave" class="btn leave-btn">🚪 Leave Current Group</a>
-                {% endif %}
-
             {% else %}
-                <p>No groups available yet. Create one to get started!</p>
+                <div class="no-group-info">
+                     <h3>No groups available yet.</h3>
+                     <p>Be the first to create one and start a new journey!</p>
+                </div>
             {% endif %}
         </div>
     </main>

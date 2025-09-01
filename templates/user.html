@@ -11,62 +11,90 @@
         <div class="logo">
             <p>Travel Together</p>
         </div>
-        <nav class="nav-links">
+        <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
             <a href="/user" class="active">User Dashboard</a>
             <a href="/groups">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
+            {% if username %}
+               <span style="margin-left: 15px;">👋 Hello, {{ username }}</span>
+               <a href="/logout">Logout</a>
+            {% else %}
+               <a href="/auth">Login / Register</a>
+            {% endif %}
         </nav>
+        <div class="menu-toggle" id="menu-toggle">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+        </div>
     </header>
 
     <main>
-        <div class="groups-container">
-            <h2>👤 User Dashboard</h2>
-
-            <div class="group-item">
-                <strong>{{ user['username'] }}</strong><br>
-                <span>Email: {{ user['email'] }}</span><br>
-                {% if user['phone_no'] %}<span>Phone: {{ user['phone_no'] }}</span><br>{% endif %}
-                {% if user['gender'] %}<span>Gender: {{ user['gender'] }}</span><br>{% endif %}
-                {% if user['marital_status'] %}<span>Status: {{ user['marital_status'] }}</span><br>{% endif %}
-                {% if user['bio'] %}<p>Bio: {{ user['bio'] }}</p>{% endif %}
-            </div>
-
-            <hr style="margin:20px 0;">
-
-            {% if group %}
-                <h3>📌 Current Group: {{ group['group_name'] }}</h3>
-                <p>{{ group['group_description'] or "No description" }}</p>
-                <p>Members: {{ group['member_count'] }}</p>
-
-                <h4>👥 Group Members</h4>
-                <ul class="group-list">
-                    {% for member in members %}
-                        <li class="group-item">
-                            <strong>{{ member['username'] }}</strong> 
-                            <span>({{ member['role'] }})</span><br>
-                            <span>Email: {{ member['email'] }}</span><br>
-                            {% if member['phone_no'] %}<span>Phone: {{ member['phone_no'] }}</span><br>{% endif %}
-                            <span>Joined: {{ member['joined_at'] }}</span>
-                        </li>
-                    {% endfor %}
-                </ul>
-
-                <div style="margin-top:20px;">
-                    <a href="/groups/leave">🚪 Leave Group</a>
+        <div class="dashboard-container">
+            <h2>👤 My Dashboard</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card user-profile-card">
+                    <div class="profile-header">
+                        <img src="https://placehold.co/80x80/00b4d8/FFFFFF?text={{ user['username'][0]|upper }}" alt="User Avatar" class="profile-avatar">
+                        <div class="profile-info">
+                            <strong>{{ user['username'] }}</strong>
+                            <span>{{ user['email'] }}</span>
+                        </div>
+                    </div>
+                    <div class="profile-details">
+                        {% if user['phone_no'] %}<span><strong>📞 Phone:</strong> {{ user['phone_no'] }}</span>{% endif %}
+                        {% if user['gender'] %}<span><strong>🧑 Gender:</strong> {{ user['gender'] }}</span>{% endif %}
+                        {% if user['marital_status'] %}<span><strong>💍 Status:</strong> {{ user['marital_status'] }}</span>{% endif %}
+                    </div>
+                    {% if user['bio'] %}<p class="profile-bio">"{{ user['bio'] }}"</p>{% endif %}
                 </div>
-            {% else %}
-                <p>You are not currently in a group.</p>
-                <a href="/groups">👉 Join or create a group</a>
-            {% endif %}
+
+                <div class="dashboard-card current-group-card">
+                    {% if group %}
+                        <h3>📌 My Current Group</h3>
+                        <h4>{{ group['group_name'] }}</h4>
+                        <p><strong>📍 Destination:</strong> {{ group['destination_name'] or 'Not Set' }}</p>
+                        <p class="group-description">{{ group['group_description'] or "No description provided." }}</p>
+                        <hr>
+                        <h5>👥 Group Members ({{ group['member_count'] }})</h5>
+                        <ul class="group-members-list">
+                            {% for member in members %}
+                                <li class="member-item">
+                                    <img src="https://placehold.co/40x40/ade8f4/333333?text={{ member['username'][0]|upper }}" alt="Member Avatar">
+                                    <div class="member-info">
+                                        <strong>{{ member['username'] }}</strong>
+                                        <span>{{ member['role'] }}</span>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <a href="/groups/leave" class="btn delete-btn" style="margin-top: 20px;">🚪 Leave Group</a>
+                    {% else %}
+                        <div class="no-group-info">
+                            <h3>You are not in a group yet!</h3>
+                            <p>Join an existing travel group or create your own to start your next adventure.</p>
+                            <a href="/groups" class="btn join-btn" style="margin-top: 10px;">Find a Group</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
         </div>
     </main>
 
     <footer>
-        <div class="main-contain">
-            <p>&copy; 2025 Mini Project</p>
-        </div>
+        <p>© 2025 Mini Project</p>
     </footer>
+
+    <script>
+        const menuToggle = document.getElementById('menu-toggle');
+        const navLinks = document.getElementById('nav-links');
+        if(menuToggle) {
+            menuToggle.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+            });
+        }
+    </script>
 </body>
 </html>

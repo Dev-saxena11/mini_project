@@ -5,57 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ group_name }} - Chat</title>
     <link rel="stylesheet" href="/static/style.css">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
-    
 </head>
 <body>
 <header class="navbar">
     <div class="logo">Travel Together</div>
-    <nav class="nav-links">
+    <nav class="nav-links" id="nav-links">
+        <a href="/home">Home</a>
+        <a href="/user">Dashboard</a>
         <a href="/groups">← Back to Groups</a>
+        {% if username %}
+            <span style="margin-left: 15px;">👋 Hello, {{ username }}</span>
+            <a href="/logout">Logout</a>
+        {% endif %}
     </nav>
+    <div class="menu-toggle" id="menu-toggle">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
 </header>
 
-<main class="group-chat-container">
-    <h2>{{ group_name }} - Group Chat</h2>
-    <div class="group-chat-messages" id="messages"></div>
-    <form method="POST" action="/groups/chat/{{ group_id }}" class="group-chat-form">
-        <input type="text" name="message" placeholder="Type a message..." required>
-        <button type="submit" class="send-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
-                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-            </svg>
-        </button>
-    </form>
+<main>
+    <div class="group-chat-container">
+        <h2>{{ group_name }}</h2>
+        <div class="group-chat-messages" id="messages">
+            </div>
+        <form class="group-chat-form" id="chat-form">
+            <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
+            <button type="submit" class="send-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </form>
+    </div>
 </main>
-
 
 <script>
     const messagesDiv = document.getElementById('messages');
-    const chatForm = document.querySelector('.group-chat-form');
+    const chatForm = document.getElementById('chat-form');
     const messageInput = chatForm.querySelector('input[name="message"]');
     const loggedInUsername = "{{ username }}";
     
-    // This variable will keep track of the last message's date to avoid repeating date separators
-    let lastMessageDate = null;
-
-    // --- RENDER INITIAL MESSAGES ---
-    // Convert the messages from Flask into a JavaScript object
-    const initialMessages ={{ messages | tojson }};
-
-    // When the page loads, render all the initial messages
+    // RENDER INITIAL MESSAGES
+    const initialMessages = {{ messages | tojson }};
     window.addEventListener('load', () => {
-        initialMessages.forEach(msg => {
-            addMessageToUI(msg, false); // 'false' means don't animate initial messages
-        });
-        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Scroll to the bottom
+        initialMessages.forEach(msg => addMessageToUI(msg));
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     });
 
-
-    // --- HANDLE SENDING NEW MESSAGES ---
+    // HANDLE SENDING NEW MESSAGES
     chatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const messageText = messageInput.value.trim();
@@ -70,10 +67,10 @@
             const result = await response.json();
 
             if (result.status === 'success') {
-                addMessageToUI(result.message, true); // 'true' means animate the new message
+                addMessageToUI(result.message);
                 messageInput.value = '';
             } else {
-                alert("Could not send message.");
+                console.error("Error sending message:", result.message);
             }
         } catch (error) {
             console.error("Network error:", error);
@@ -81,33 +78,22 @@
     });
 
     /**
-     * Creates and adds a message bubble and potentially a date separator to the UI.
+     * Creates and adds a message bubble to the UI.
      * @param {object} msg - The message object.
-     * @param {boolean} animate - Whether to apply the slide-in animation.
      */
-    function addMessageToUI(msg, animate = false) {
-        const messageDate = new Date(msg.timestamp).toDateString(); // e.g., "Fri Aug 29 2025"
-
-        // 1. Add a date separator if the day has changed
-        if (messageDate !== lastMessageDate) {
-            addDateSeparator(new Date(msg.timestamp));
-            lastMessageDate = messageDate;
-        }
-
-        // 2. Create the message bubble
+    function addMessageToUI(msg) {
         const messageContainer = document.createElement('div');
         const messageClass = msg.sender_name === loggedInUsername ? 'own-message' : 'other-message';
         messageContainer.className = `message-container ${messageClass}`;
     
-        // Create avatar HTML only for other users
         const avatarHTML = messageClass === 'other-message' 
-            ? `<img src="https://placehold.co/40x40/EFEFEF/333333?text=${msg.sender_name.charAt(0)}" alt="Avatar" class="chat-avatar">`
+            ? `<img src="https://placehold.co/40x40/ade8f4/333333?text=${msg.sender_name.charAt(0).toUpperCase()}" alt="Avatar" class="chat-avatar">`
             : '';
 
         messageContainer.innerHTML = `
             ${avatarHTML}
             <div class="group-chat-message">
-                <strong>${msg.sender_name}</strong>
+                ${messageClass === 'other-message' ? `<strong>${msg.sender_name}</strong>` : ''}
                 <p>${escapeHTML(msg.message)}</p>
                 <small>${formatSimpleTime(msg.timestamp)}</small>
             </div>
@@ -117,37 +103,8 @@
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
     
-    /**
-     * Adds a date separator bubble to the chat.
-     * @param {Date} date - The date to display.
-     */
-    function addDateSeparator(date) {
-        const separator = document.createElement('div');
-        separator.className = 'date-separator';
-        
-        // Check if the date is today
-        const today = new Date().toDateString();
-        const yesterday = new Date(Date.now() - 86400000).toDateString();
-        
-        let dateText = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
-        if (date.toDateString() === today) {
-            dateText = 'Today';
-        } else if (date.toDateString() === yesterday) {
-            dateText = 'Yesterday';
-        }
-        
-        separator.innerHTML = `<span>${dateText}</span>`;
-        messagesDiv.appendChild(separator);
-    }
-    
-    /**
-     * Formats a timestamp into a simple HH:MM AM/PM format.
-     * @param {string} timestamp - The full timestamp string.
-     * @returns {string} - The formatted time.
-     */
     function formatSimpleTime(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('en-US', {
+        return new Date(timestamp).toLocaleTimeString('en-US', {
             hour: 'numeric',
             minute: 'numeric',
             hour12: true

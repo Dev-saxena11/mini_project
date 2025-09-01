@@ -1,163 +1,176 @@
-const menuToggle = document.getElementById('menu-toggle');
-        const navLinks = document.getElementById('nav-links');
-        const chatMessages = document.getElementById('chat-messages');
-        const chatInput = document.getElementById('chat-input');
-        const typingIndicator = document.getElementById('typing-indicator');
+document.addEventListener('DOMContentLoaded', () => {
+    // === DOM Element Selectors ===
+    const menuToggle = document.getElementById('menu-toggle');
+    const navLinks = document.getElementById('nav-links');
+    const chatMessages = document.getElementById('chat-messages');
+    const chatInput = document.getElementById('chat-input');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const chatbotContainer = document.getElementById('chatbot-container');
+    const quickActions = document.getElementById('quick-actions');
+    const clearChatBtn = document.getElementById('clear-chat-btn');
 
-        // Menu toggle functionality
-        menuToggle.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
+    // === State ===
+    let chatHistory = [];
+    let quickActionsVisible = true;
 
-        // Chatbot knowledge base
-        const responses = {
-            "how does travel together work": "Travel Together connects travelers with similar interests! 🌍 You can browse destinations, join travel groups, create your own trips, and connect with like-minded adventurers. Our platform makes it easy to find travel companions and plan amazing journeys together!",
-            
-            "how do i join a travel group": "Joining a group is simple! 👥 Go to the 'Groups' section, browse available trips, and click 'Join Group' on any that interest you. You can filter by destination, dates, group size, and interests to find your perfect travel match!",
-            
-            "what features are available": "We offer lots of exciting features! ✨\n• Browse and join travel groups\n• Create your own trips\n• User dashboard to manage your travels\n• Travel assistant for planning help\n• Chat with group members\n• Destination guides and tips\n• Safety and verification features",
-            
-            "how do i create an account": "Getting started is easy! 📝 Click the 'Sign Up' button (coming soon in User Dashboard), fill out your profile with travel preferences, interests, and a bit about yourself. Then you can start browsing groups and connecting with fellow travelers immediately!",
-            
-            "what is travel together": "Travel Together is a platform that connects travelers worldwide! 🌎 We help you find travel companions, join group trips, and create unforgettable experiences. Whether you're looking for adventure buddies, cultural explorers, or relaxation partners, we've got you covered!",
-            
-            "is it safe": "Safety is our top priority! 🛡️ We have user verification systems, reviews and ratings for travelers, secure messaging, and safety guidelines for all trips. We also provide emergency contacts and travel insurance recommendations for peace of mind.",
-            
-            "what destinations are available": "We cover destinations worldwide! 🗺️ From popular spots like Paris, Tokyo, and New York to off-the-beaten-path adventures in Nepal, Iceland, and Madagascar. Our travelers organize trips to every continent - where would you like to go?",
-            
-            "how much does it cost": "Joining Travel Together is free! 💰 You only pay for your own travel expenses (flights, hotels, activities) when you join a trip. Group organizers sometimes charge small coordination fees, but these are clearly stated upfront.",
-            
-            "hello": "Hello there! 👋 Welcome to Travel Together! I'm excited to help you discover amazing travel opportunities. What would you like to know about our platform?",
-            
-            "hi": "Hi! 😊 Great to meet you! I'm here to help you navigate Travel Together and find your next adventure. What questions do you have?",
-            
-            "help": "I'm here to help! 🤝 I can assist you with:\n• Understanding how Travel Together works\n• Finding and joining travel groups\n• Learning about our features\n• Account creation process\n• Safety information\n• Destination suggestions\n\nWhat would you like to know more about?"
-        };
+    // === Chatbot Knowledge Base ===
+    const responses = {
+        "how it works": "Travel Together connects travelers! 🌍 You can browse destinations, join or create groups, and connect with like-minded adventurers to plan amazing journeys together!",
+        "join groups": "It's simple! 👥 Go to the 'Groups' section, find a trip that interests you, and click 'Join Group'. You can find your perfect travel match!",
+        "features": "We offer lots of features! ✨ Browse and join groups, create your own trips, a user dashboard, this travel assistant, and group chats!",
+        "default": "I can help with that! 🤔 Try asking about how Travel Together works, joining groups, or our features. You can also use the quick action buttons."
+    };
 
-        function toggleChatbot() {
-            const container = document.getElementById('chatbot-container');
-            const isVisible = container.style.display === 'flex';
-            container.style.display = isVisible ? 'none' : 'flex';
-            
-            if (!isVisible) {
-                setTimeout(() => chatInput.focus(), 300);
-            }
+    // === Event Listeners ===
+    if (menuToggle) menuToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
+    if (clearChatBtn) clearChatBtn.addEventListener('click', clearChat);
+
+    // === Functions ===
+
+    /** Toggles the chatbot's visibility */
+    window.toggleChatbot = () => {
+        const isVisible = chatbotContainer.style.display === 'flex';
+        chatbotContainer.style.display = isVisible ? 'none' : 'flex';
+        if (!isVisible) setTimeout(() => chatInput.focus(), 300);
+    };
+    
+    /** Opens the chatbot */
+    window.openChatbot = () => {
+        chatbotContainer.style.display = 'flex';
+        setTimeout(() => chatInput.focus(), 300);
+    };
+
+    /** Closes the chatbot */
+    window.closeChatbot = () => {
+        chatbotContainer.style.display = 'none';
+    };
+
+    /** Handles the enter key press in the input field */
+    window.handleKeyPress = (event) => {
+        if (event.key === 'Enter') sendMessage();
+    };
+    
+    /** Sends a message from the text input */
+    window.sendMessage = () => {
+        const messageText = chatInput.value.trim();
+        if (!messageText) return;
+        
+        addMessage(messageText, 'user');
+        chatInput.value = '';
+        if (quickActionsVisible) {
+            quickActions.style.display = 'none';
+            quickActionsVisible = false;
         }
-
-        function openChatbot() {
-            document.getElementById('chatbot-container').style.display = 'flex';
-            setTimeout(() => chatInput.focus(), 300);
+        
+        generateBotResponse(messageText);
+    };
+    
+    /** Sends a message from a quick action button */
+    window.sendQuickMessage = (messageText) => {
+        addMessage(messageText, 'user');
+        if (quickActionsVisible) {
+            quickActions.style.display = 'none';
+            quickActionsVisible = false;
         }
+        generateBotResponse(messageText);
+    };
 
-        function closeChatbot() {
-            document.getElementById('chatbot-container').style.display = 'none';
-        }
+    /**
+     * Creates and adds a message to the UI and history.
+     * @param {string} text - The message content.
+     * @param {string} sender - 'user' or 'bot'.
+     * @param {string} [timestamp=now] - Optional timestamp for loading history.
+     */
+    function addMessage(text, sender, timestamp = new Date().toISOString()) {
+        const messageData = { text, sender, timestamp };
+        chatHistory.push(messageData);
+        saveChatHistory();
 
-        function sendMessage() {
-            const message = chatInput.value.trim();
-            if (!message) return;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}-message`;
+        
+        const textNode = document.createElement('p');
+        textNode.textContent = text;
+        
+        const timeNode = document.createElement('small');
+        timeNode.className = 'message-timestamp';
+        timeNode.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-            // Add user message
-            addMessage(message, 'user');
-            chatInput.value = '';
+        messageDiv.appendChild(textNode);
+        messageDiv.appendChild(timeNode);
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
-            // Show typing indicator
-            showTyping();
-
-            // Generate bot response
-            setTimeout(() => {
-                hideTyping();
-                const response = generateResponse(message);
-                addMessage(response, 'bot');
-            }, 1000 + Math.random() * 1000);
-        }
-
-        function sendQuickMessage(message) {
-            addMessage(message, 'user');
-            showTyping();
-
-            setTimeout(() => {
-                hideTyping();
-                const response = generateResponse(message);
-                addMessage(response, 'bot');
-            }, 800);
-        }
-
-        function addMessage(text, sender) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}-message`;
-            messageDiv.textContent = text;
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function showTyping() {
-            typingIndicator.style.display = 'block';
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-        }
-
-        function hideTyping() {
-            typingIndicator.style.display = 'none';
-        }
-
-        function generateResponse(message) {
-            const lowerMessage = message.toLowerCase();
-            
-            // Check for direct matches first
-            for (const [key, response] of Object.entries(responses)) {
+    /** Simulates the bot's response generation */
+    function generateBotResponse(userMessage) {
+        showTyping();
+        setTimeout(() => {
+            hideTyping();
+            const lowerMessage = userMessage.toLowerCase();
+            let response = responses.default; // Default response
+            for (const key in responses) {
                 if (lowerMessage.includes(key)) {
-                    return response;
+                    response = responses[key];
+                    break;
                 }
             }
-            
-            // Check for keywords
-            if (lowerMessage.includes('group') || lowerMessage.includes('join')) {
-                return responses["how do i join a travel group"];
-            }
-            
-            if (lowerMessage.includes('account') || lowerMessage.includes('sign up') || lowerMessage.includes('register')) {
-                return responses["how do i create an account"];
-            }
-            
-            if (lowerMessage.includes('safe') || lowerMessage.includes('security')) {
-                return responses["is it safe"];
-            }
-            
-            if (lowerMessage.includes('cost') || lowerMessage.includes('price') || lowerMessage.includes('money')) {
-                return responses["how much does it cost"];
-            }
-            
-            if (lowerMessage.includes('destination') || lowerMessage.includes('where') || lowerMessage.includes('place')) {
-                return responses["what destinations are available"];
-            }
-            
-            if (lowerMessage.includes('feature') || lowerMessage.includes('what can')) {
-                return responses["what features are available"];
-            }
-            
-            // Default responses for common patterns
-            if (lowerMessage.includes('thank')) {
-                return "You're welcome! 😊 I'm always here to help. Is there anything else you'd like to know about Travel Together?";
-            }
-            
-            if (lowerMessage.includes('bye') || lowerMessage.includes('goodbye')) {
-                return "Goodbye! 👋 Have an amazing day and happy travels! Feel free to come back anytime if you have more questions.";
-            }
-            
-            // Default response
-            return "I'd be happy to help! 🤔 Try asking me about how Travel Together works, joining groups, our features, creating an account, safety, or destinations. You can also use the quick action buttons below for common questions!";
+            addMessage(response, 'bot');
+        }, 1200);
+    }
+    
+    /** Clears the chat UI, history, and local storage */
+    function clearChat() {
+        chatMessages.innerHTML = '';
+        chatHistory = [];
+        localStorage.removeItem('chatHistory');
+        addMessage("Hello! 👋 How can I help you plan your next adventure?", 'bot');
+        if (!quickActionsVisible) {
+            quickActions.style.display = 'flex';
+            quickActionsVisible = true;
         }
+    }
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                sendMessage();
+    // --- Utility Functions ---
+    function showTyping() {
+        typingIndicator.style.display = 'flex';
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+    function hideTyping() { typingIndicator.style.display = 'none'; }
+    function saveChatHistory() { localStorage.setItem('chatHistory', JSON.stringify(chatHistory)); }
+
+    /** Loads chat history from local storage on page load */
+    function loadChatHistory() {
+        const savedHistory = localStorage.getItem('chatHistory');
+        if (savedHistory) {
+            chatHistory = JSON.parse(savedHistory);
+            chatMessages.innerHTML = ''; // Clear any static content
+            chatHistory.forEach(msg => {
+                // Re-render message without adding to history again
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${msg.sender}-message`;
+                const textNode = document.createElement('p');
+                textNode.textContent = msg.text;
+                const timeNode = document.createElement('small');
+                timeNode.className = 'message-timestamp';
+                timeNode.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                messageDiv.appendChild(textNode);
+                messageDiv.appendChild(timeNode);
+                chatMessages.appendChild(messageDiv);
+            });
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if(chatHistory.length > 1) { // If there's more than the welcome message
+                 quickActions.style.display = 'none';
+                 quickActionsVisible = false;
             }
+        } else {
+            // If no history, add the initial bot message
+            addMessage("Hello! 👋 How can I help you plan your next adventure?", 'bot');
         }
+    }
 
-        // Show welcome animation on page load
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const toggle = document.getElementById('chatbot-toggle');
-                toggle.style.animation = 'pulse 2s infinite';
-            }, 2000);
-        });
+    // --- Initial Load ---
+    loadChatHistory();
+});
