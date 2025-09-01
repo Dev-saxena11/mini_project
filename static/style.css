@@ -337,3 +337,27 @@ footer {
     transform: scale(1.1) rotate(15deg);
     box-shadow: 0 4px 15px rgba(0, 119, 182, 0.3);
 }
+
+/* Global search enhancements */
+.filters-container {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.filters-container input,
+.filters-container select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--light-gray);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: #fcfdff;
+}
+
+.filters-container input:focus,
+.filters-container select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 8px rgba(0, 119, 182, 0.2);
+}

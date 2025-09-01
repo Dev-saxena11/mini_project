@@ -61,6 +61,17 @@
             </div>
             {% endif %}
 
+            <div class="dashboard-card" style="margin-bottom: 40px;">
+                <h3 style="text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: var(--primary-color);">Find an Adventure</h3>
+                <div class="filters-container">
+                    <input type="search" id="group-search" placeholder="Search by name, destination..." autocomplete="off">
+                    <select id="group-type-filter">
+                        <option value="All">All Types</option>
+                        <option value="Public">Public</option>
+                        <option value="Private">Private</option>
+                    </select>
+                </div>
+            </div>
             {% if groups %}
                 <ul class="group-list">
                     {% for group in groups %}
@@ -108,6 +119,47 @@
         const navLinks = document.getElementById('nav-links');
         menuToggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
+        });
+        // Add this inside the <script> tag at the bottom of groups.html
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const searchInput = document.getElementById('group-search');
+            const typeFilter = document.getElementById('group-type-filter');
+            const groupItems = document.querySelectorAll('.group-list .group-item');
+
+            function filterGroups() {
+                const searchTerm = searchInput.value.toLowerCase();
+                const selectedType = typeFilter.value;
+
+                groupItems.forEach(item => {
+                    // Get text content from the group item for searching
+                    const groupName = item.querySelector('h3').textContent.toLowerCase();
+                    const destination = item.querySelector('p:nth-of-type(1)').textContent.toLowerCase();
+                    const description = item.querySelector('.desc').textContent.toLowerCase();
+                    const fullText = groupName + destination + description;
+                    
+                    // Get the group type from the <span> inside the <h3>
+                    const groupTypeSpan = item.querySelector('h3 .type');
+                    const groupType = groupTypeSpan ? groupTypeSpan.textContent.replace(/[()]/g, '') : '';
+
+                    // Check if the item matches the search and filter criteria
+                    const searchMatch = fullText.includes(searchTerm);
+                    const typeMatch = (selectedType === 'All' || groupType === selectedType);
+
+                    // Show or hide the item based on whether it matches
+                    if (searchMatch && typeMatch) {
+                        item.style.display = ''; // Show the item
+                    } else {
+                        item.style.display = 'none'; // Hide the item
+                    }
+                });
+            }
+
+            // Add event listeners to trigger the filter function
+            if (searchInput && typeFilter) {
+                searchInput.addEventListener('input', filterGroups);
+                typeFilter.addEventListener('change', filterGroups);
+            }
         });
     </script>
 </body>
