@@ -262,6 +262,35 @@ def send_message_api(group_id):
         }
     })
 
+# app.py
+
+# ... (keep all existing routes) ...
+
+# --- API Routes ---
+
+@app.route('/api/chatbot', methods=['POST'])
+def chatbot_api():
+    """ API endpoint for the chatbot """
+    data = request.json
+    user_message = data.get('message', '').lower()
+    
+    bot_response = "I'm not sure how to help with that. Try asking about our features or for a travel recommendation!"
+
+    # Check for keywords related to recommendations
+    recommend_keywords = ['recommend', 'popular', 'destination', 'suggest', 'where to go']
+    if any(keyword in user_message for keyword in recommend_keywords):
+        popular_destinations = database.get_popular_destinations()
+        if popular_destinations:
+            dest_list = ", ".join(popular_destinations)
+            bot_response = f"✈️ Based on other travelers, our most popular destinations right now are: {dest_list}. You can create a group for one of them!"
+        else:
+            bot_response = "We don't have any popular destinations yet, but you can be the first to start a trend by creating a group!"
+            
+    return jsonify({"response": bot_response})
+
+
+
+
 
 if __name__ == '__main__':
     initialize_database()

@@ -313,6 +313,40 @@ def get_group_members(group_id):
     conn.close()
     return members
 
+# database.py
+
+# ... (keep all existing functions) ...
+
+# --- RECOMMENDATION ENGINE ---
+
+def get_popular_destinations(limit=3):
+    """
+    Fetches the most popular destinations based on the number of groups.
+    Returns a list of destination names.
+    """
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        # Query to count groups per destination and order by that count
+        query = """
+            SELECT d.destination_name
+            FROM Groups g
+            JOIN Destinations d ON g.destination_id = d.destination_id
+            GROUP BY d.destination_name
+            ORDER BY COUNT(g.group_id) DESC
+            LIMIT ?
+        """
+        results = cursor.execute(query, (limit,)).fetchall()
+        # Extract just the names from the query result
+        destinations = [row['destination_name'] for row in results]
+        return destinations
+    except sqlite3.Error as e:
+        print(f"Database error in get_popular_destinations: {e}")
+        return []
+    finally:
+        conn.close()
+
+
 # --- MESSAGING ---
 
 def add_group_message(group_id, sender_id, message):

@@ -119,6 +119,58 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage(response, 'bot');
         }, 1200);
     }
+
+    
+
+    /** Simulates the bot's response generation */
+    function generateBotResponse(userMessage) {
+        showTyping();
+        const lowerMessage = userMessage.toLowerCase();
+
+        // --- Local First Response Check ---
+        // You can keep some instant, hardcoded responses for speed
+        const localResponses = {
+            "how it works": "Travel Together connects travelers! 訣 You can browse destinations, join or create groups, and connect with like-minded adventurers to plan amazing journeys together!",
+            "join groups": "It's simple! 則 Go to the 'Groups' section, find a trip that interests you, and click 'Join Group'. You can find your perfect travel match!",
+            "features": "We offer lots of features! 笨ｨ Browse and join groups, create your own trips, a user dashboard, this travel assistant, and group chats!"
+        };
+
+        for (const key in localResponses) {
+            if (lowerMessage.includes(key)) {
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage(localResponses[key], 'bot');
+                }, 1000);
+                return; // Exit the function if a local match is found
+            }
+        }
+        
+        // --- API Call for Dynamic Responses (like recommendations) ---
+        fetch('/api/chatbot', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: userMessage }),
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            hideTyping();
+            addMessage(data.response, 'bot');
+        })
+        .catch(error => {
+            console.error('Error fetching chatbot response:', error);
+            hideTyping();
+            addMessage("Sorry, I'm having trouble connecting right now. Please try again later.", 'bot');
+        });
+    }
+
+
     
     /** Clears the chat UI, history, and local storage */
     function clearChat() {
