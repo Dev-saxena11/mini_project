@@ -8,22 +8,21 @@
 </head>
 <body>
     <header class="navbar">
-        <div class="logo">Travel Together</div>
+        <div class="logo">
+            <p>Travel Together</p>
+        </div>
         <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
             <a href="/user">User Dashboard</a>
-            <a href="/groups" class="active">Groups</a>
+            <a href="/groups">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
-            {% if username %}
-               <span style="margin-left: 15px;">👋 Hello, {{ username }}</span>
-               <a href="/logout">Logout</a>
-            {% else %}
-               <a href="/auth">Login / Register</a>
-            {% endif %}
+            
         </nav>
         <div class="menu-toggle" id="menu-toggle">
-            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
         </div>
     </header>
 
@@ -90,6 +89,7 @@
                         </li>
                     {% endfor %}
                 </ul>
+
             {% else %}
                 <div class="no-group-info">
                      <h3>No groups available yet.</h3>

@@ -13,16 +13,11 @@
         </div>
         <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
-            <a href="/user" class="active">User Dashboard</a>
+            <a href="/user">User Dashboard</a>
             <a href="/groups">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
-            {% if username %}
-               <span style="margin-left: 15px;">👋 Hello, {{ username }}</span>
-               <a href="/logout">Logout</a>
-            {% else %}
-               <a href="/auth">Login / Register</a>
-            {% endif %}
+            
         </nav>
         <div class="menu-toggle" id="menu-toggle">
             <div class="bar"></div>
