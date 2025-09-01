@@ -44,19 +44,33 @@
     const chatForm = document.getElementById('chat-form');
     const messageInput = chatForm.querySelector('input[name="message"]');
     const loggedInUsername = "{{ username }}";
-    
-    // RENDER INITIAL MESSAGES
+
+    // --- RENDER INITIAL MESSAGES ON PAGE LOAD ---
     const initialMessages = {{ messages | tojson }};
     window.addEventListener('load', () => {
-        initialMessages.forEach(msg => addMessageToUI(msg));
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        // Add a small delay to allow the page to render first
+        setTimeout(() => {
+            initialMessages.forEach(msg => addMessageToUI(msg, false)); // Don't animate initial load
+            scrollToBottom(true); // Scroll instantly on load
+        }, 100);
     });
 
-    // HANDLE SENDING NEW MESSAGES
+    // --- HANDLE SENDING NEW MESSAGES ---
     chatForm.addEventListener('submit', async function(event) {
         event.preventDefault();
         const messageText = messageInput.value.trim();
         if (messageText === "") return;
+
+        // Optimistically add the user's message to the UI
+        const optimisticMessage = {
+            sender_name: loggedInUsername,
+            message: messageText,
+            timestamp: new Date().toISOString()
+        };
+        addMessageToUI(optimisticMessage, true);
+        const pendingMessageElement = messagesDiv.lastElementChild; // Get the element we just added
+        pendingMessageElement.style.opacity = '0.6'; // Mark as 'sending'
+        messageInput.value = '';
 
         try {
             const response = await fetch(`/api/messages/send/{{ group_id }}`, {
@@ -67,41 +81,62 @@
             const result = await response.json();
 
             if (result.status === 'success') {
-                addMessageToUI(result.message);
-                messageInput.value = '';
+                // Message sent successfully, update the UI to confirm
+                pendingMessageElement.style.opacity = '1'; 
             } else {
+                // If sending failed, indicate an error
                 console.error("Error sending message:", result.message);
+                pendingMessageElement.style.border = '1px solid red'; // Visual error indicator
             }
         } catch (error) {
             console.error("Network error:", error);
+            pendingMessageElement.style.border = '1px solid red';
         }
     });
 
     /**
      * Creates and adds a message bubble to the UI.
      * @param {object} msg - The message object.
+     * @param {boolean} animate - Whether to apply the entrance animation.
      */
-    function addMessageToUI(msg) {
+    function addMessageToUI(msg, animate = true) {
         const messageContainer = document.createElement('div');
-        const messageClass = msg.sender_name === loggedInUsername ? 'own-message' : 'other-message';
+        const isOwnMessage = msg.sender_name === loggedInUsername;
+        const messageClass = isOwnMessage ? 'own-message' : 'other-message';
         messageContainer.className = `message-container ${messageClass}`;
-    
-        const avatarHTML = messageClass === 'other-message' 
-            ? `<img src="https://placehold.co/40x40/ade8f4/333333?text=${msg.sender_name.charAt(0).toUpperCase()}" alt="Avatar" class="chat-avatar">`
-            : '';
+        
+        // Use a placeholder for avatars. You could later replace this with real user avatars.
+        const avatarLetter = msg.sender_name.charAt(0).toUpperCase();
+        const avatarColor = isOwnMessage ? '0096c7' : 'ade8f4';
+        const avatarTextColor = isOwnMessage ? 'ffffff' : '333333';
+
+        const avatarHTML = `
+            <img src="https://placehold.co/40x40/${avatarColor}/${avatarTextColor}?text=${avatarLetter}" alt="Avatar" class="chat-avatar">
+        `;
+        
+        // Don't show the sender's name on their own messages
+        const senderNameHTML = !isOwnMessage ? `<strong>${escapeHTML(msg.sender_name)}</strong>` : '';
 
         messageContainer.innerHTML = `
             ${avatarHTML}
             <div class="group-chat-message">
-                ${messageClass === 'other-message' ? `<strong>${msg.sender_name}</strong>` : ''}
+                ${senderNameHTML}
                 <p>${escapeHTML(msg.message)}</p>
                 <small>${formatSimpleTime(msg.timestamp)}</small>
             </div>
         `;
-    
+        
+        // Remove animation class if we don't want to animate
+        if (!animate) {
+            const messageBubble = messageContainer.querySelector('.group-chat-message');
+            messageBubble.style.animation = 'none';
+        }
+
         messagesDiv.appendChild(messageContainer);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        scrollToBottom();
     }
+    
+    // --- UTILITY FUNCTIONS ---
     
     function formatSimpleTime(timestamp) {
         return new Date(timestamp).toLocaleTimeString('en-US', {
@@ -115,6 +150,13 @@
         const p = document.createElement("p");
         p.appendChild(document.createTextNode(str));
         return p.innerHTML;
+    }
+
+    function scrollToBottom(instant = false) {
+        messagesDiv.scrollTo({
+            top: messagesDiv.scrollHeight,
+            behavior: instant ? 'instant' : 'smooth'
+        });
     }
 </script>
 </body>
