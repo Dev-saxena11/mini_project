@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -158,6 +158,177 @@
             behavior: instant ? 'instant' : 'smooth'
         });
     }
+</script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ group_name }} - Chat</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="navbar">
+    <div class="logo">Travel Together</div>
+    <nav class="nav-links" id="nav-links">
+        <a href="/home">Home</a>
+        <a href="/user">Dashboard</a>
+        <a href="/groups">← Back to Groups</a>
+        {% if username %}
+            <span style="margin-left: 15px;">👋 Hello, {{ username }}</span>
+            <a href="/logout">Logout</a>
+        {% endif %}
+    </nav>
+    <div class="menu-toggle" id="menu-toggle">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+</header>
+
+<main>
+    <div class="group-chat-container">
+        <h2>{{ group_name }}</h2>
+        <div class="group-chat-messages" id="messages">
+            </div>
+        <form class="group-chat-form" id="chat-form">
+            <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
+            <button type="submit" class="send-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                    <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                </svg>
+            </button>
+        </form>
+    </div>
+</main>
+
+<script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const messagesDiv = document.getElementById('messages');
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = chatForm.querySelector('input[name="message"]');
+        const loggedInUsername = "{{ username }}";
+        const groupId = "{{ group_id }}";
+    
+        // --- NEW: WEBSOCKET SETUP ---
+        const socket = io();
+
+        // 1. Tell the server to join the specific group chat room
+        socket.on('connect', () => {
+            socket.emit('join_room', { group_id: groupId });
+        });
+
+        // 2. Listen for new messages pushed from the server
+        socket.on('new_message', (data) => {
+            // Only add the message if it's from another user.
+            // Your own messages are added "optimistically" when you hit send.
+            if (data.sender_name !== loggedInUsername) {
+                addMessageToUI(data, true);
+            }
+        });
+
+        // --- RENDER INITIAL MESSAGES ON PAGE LOAD ---
+        const initialMessages = {{ messages | tojson }};
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                initialMessages.forEach(msg => addMessageToUI(msg, false));
+                scrollToBottom(true);
+            }, 100);
+        });
+
+        // --- HANDLE SENDING NEW MESSAGES (Your existing logic is great!) ---
+        chatForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const messageText = messageInput.value.trim();
+            if (messageText === "") return;
+
+            // Optimistically add the user's message to the UI
+            const optimisticMessage = {
+                sender_name: loggedInUsername,
+                message: messageText,
+                timestamp: new Date().toISOString()
+            };
+            addMessageToUI(optimisticMessage, true);
+            const pendingMessageElement = messagesDiv.lastElementChild;
+            pendingMessageElement.style.opacity = '0.6';
+            messageInput.value = '';
+
+            try {
+                // This fetch call now triggers the backend to save AND broadcast the message
+                const response = await fetch(`/api/messages/send/${groupId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: messageText }),
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    pendingMessageElement.style.opacity = '1'; 
+                } else {
+                    console.error("Error sending message:", result.message);
+                    pendingMessageElement.style.border = '1px solid red';
+                }
+            } catch (error) {
+                console.error("Network error:", error);
+                pendingMessageElement.style.border = '1px solid red';
+            }
+        });
+
+        /**
+         * Creates and adds a message bubble to the UI. (Your function, unchanged)
+         */
+        function addMessageToUI(msg, animate = true) {
+            const messageContainer = document.createElement('div');
+            const isOwnMessage = msg.sender_name === loggedInUsername;
+            const messageClass = isOwnMessage ? 'own-message' : 'other-message';
+            messageContainer.className = `message-container ${messageClass}`;
+            
+            const avatarLetter = msg.sender_name.charAt(0).toUpperCase();
+            const avatarColor = isOwnMessage ? '0096c7' : 'ade8f4';
+            const avatarTextColor = isOwnMessage ? 'ffffff' : '333333';
+
+            const avatarHTML = `
+                <img src="https://placehold.co/40x40/${avatarColor}/${avatarTextColor}?text=${avatarLetter}" alt="Avatar" class="chat-avatar">
+            `;
+            
+            const senderNameHTML = !isOwnMessage ? `<strong>${escapeHTML(msg.sender_name)}</strong>` : '';
+
+            messageContainer.innerHTML = `
+                ${avatarHTML}
+                <div class="group-chat-message">
+                    ${senderNameHTML}
+                    <p>${escapeHTML(msg.message)}</p>
+                    <small>${formatSimpleTime(msg.timestamp)}</small>
+                </div>
+            `;
+            
+            if (!animate) {
+                const messageBubble = messageContainer.querySelector('.group-chat-message');
+                messageBubble.style.animation = 'none';
+            }
+
+            messagesDiv.appendChild(messageContainer);
+            scrollToBottom();
+        }
+        
+        // --- UTILITY FUNCTIONS (Unchanged) ---
+        function formatSimpleTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+        }
+
+        function escapeHTML(str) {
+            const p = document.createElement("p");
+            p.appendChild(document.createTextNode(str));
+            return p.innerHTML;
+        }
+
+        function scrollToBottom(instant = false) {
+            messagesDiv.scrollTo({ top: messagesDiv.scrollHeight, behavior: instant ? 'instant' : 'smooth' });
+        }
+    });
 </script>
 </body>
 </html>
