@@ -26,7 +26,6 @@ def validate_user_session():
     user = conn.execute("SELECT * FROM Users WHERE username=?", (username,)).fetchone()
     
     if not user:
-        # User in session does not exist in DB, clear session
         session.pop("username", None)
         flash("Your session was invalid. Please log in again.", "warning")
         conn.close()
@@ -63,7 +62,6 @@ def auth():
         if action == "register":
             show_register = True
             email = request.form.get("email")
-            # Get optional fields
             phone_no = request.form.get("phone_no") or None
             gender = request.form.get("gender") or None
             marital_status = request.form.get("marital_status") or None
@@ -107,15 +105,11 @@ def user():
     if not user_data:
         return redirect("/auth")
     
-    group_data = None
-    members = []
-    if user_data['current_group_id']:
-        group_data = database.get_user_group(user_data['userid'])
-        if group_data:
-            members = database.get_group_members(group_data['group_id'])
+    # Fetch all groups the user is a part of
+    user_groups = database.get_user_groups(user_data['userid'])
     
     conn.close()
-    return render_template("user.html", user=user_data, group=group_data, members=members)
+    return render_template("user.html", user=user_data, groups=user_groups)
 
 # --- GROUP ROUTES ---
 @app.route('/groups', methods=["GET", "POST"])
@@ -139,20 +133,20 @@ def groups():
                 if gid:
                     flash(f"✅ Group '{group_name}' created successfully!")
                 else:
-                    flash("❌ Could not create group. You may already be in one.")
+                    flash("❌ An error occurred while creating the group.")
             else:
                 flash("❌ Invalid destination name provided.")
         conn.close()
         return redirect("/groups")
 
     destinations = database.get_all_destinations()
+    # Updated query to check membership from GroupMembers table
     groups_list = conn.execute("""
         SELECT g.*, u.username as owner_name, d.destination_name,
-               CASE WHEN gm.user_id IS NOT NULL THEN 1 ELSE 0 END as is_member
+               (SELECT 1 FROM GroupMembers gm WHERE gm.group_id = g.group_id AND gm.user_id = ?) as is_member
         FROM Groups g
         JOIN Users u ON g.owner_id = u.userid
         LEFT JOIN Destinations d ON g.destination_id = d.destination_id
-        LEFT JOIN GroupMembers gm ON g.group_id = gm.group_id AND gm.user_id = ?
     """, (user['userid'],)).fetchall()
     
     conn.close()
@@ -168,33 +162,30 @@ def join_group(group_id):
     if database.join_group(user['userid'], group_id):
         flash("✅ Successfully joined the group!")
     else:
-        flash("❌ Could not join group. It may be full or you're already in one.")
+        flash("❌ Could not join group. It may be full or you're already in it.")
     return redirect("/groups")
 
-@app.route('/groups/leave')
-def leave_group():
+@app.route('/groups/leave/<group_id>')
+def leave_group(group_id):
     conn, user = validate_user_session()
     if not user: return redirect("/auth")
     conn.close()
 
-    if database.leave_group(user['userid']):
-        flash("✅ You have left your current group.")
+    if database.leave_group(user['userid'], group_id):
+        flash("✅ You have left the group.")
     else:
-        flash("❌ Could not leave group. Owners must delete their group.")
+        flash("❌ Could not leave group. Owners must delete their group instead.")
     return redirect("/groups")
 
 @app.route('/groups/delete/<group_id>')
 def delete_group(group_id):
     conn, user = validate_user_session()
     if not user: return redirect("/auth")
-
-    group = conn.execute("SELECT owner_id FROM Groups WHERE group_id=?", (group_id,)).fetchone()
     
-    if not group or group['owner_id'] != user['userid']:
-        flash("❌ You are not authorized to delete this group.")
-    else:
-        database.delete_group(group_id)
+    if database.delete_group(group_id, user['userid']):
         flash("✅ Group deleted successfully!")
+    else:
+        flash("❌ You are not authorized to delete this group.")
     
     conn.close()
     return redirect("/groups")
@@ -205,7 +196,6 @@ def group_chat(group_id):
     conn, user = validate_user_session()
     if not user: return redirect("/auth")
 
-    # Check if user is a member of the group
     is_member = conn.execute("SELECT 1 FROM GroupMembers WHERE group_id=? AND user_id=?", (group_id, user['userid'])).fetchone()
     if not is_member:
         flash("⚠️ You are not a member of this group.")
@@ -242,19 +232,16 @@ def send_message_api(group_id):
         conn.close()
         return jsonify({"status": "error", "message": "Message is empty"}), 400
 
-    # Save message to the database
     if not database.add_group_message(group_id, user['userid'], message_text):
         conn.close()
         return jsonify({"status": "error", "message": "Could not save message."}), 500
     
-    # Prepare the payload for broadcasting via WebSocket
     message_payload = {
         "sender_name": user['username'],
         "message": message_text,
         "timestamp": datetime.now().isoformat()
     }
     
-    # Emit the message to all clients in the specific group's room
     socketio.emit('new_message', message_payload, to=group_id)
     
     conn.close()
@@ -262,7 +249,6 @@ def send_message_api(group_id):
 
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot_api():
-    """ API endpoint for the chatbot """
     data = request.json
     user_message = data.get('message', '').lower()
     
@@ -282,14 +268,12 @@ def chatbot_api():
 # --- WEBSOCKET EVENT HANDLERS ---
 @socketio.on('join_room')
 def handle_join_room(data):
-    """Client tells server it wants to join a group's chat room."""
     group_id = data['group_id']
     join_room(group_id)
     print(f"Client joined room: {group_id}")
 
 @socketio.on('leave_room')
 def handle_leave_room(data):
-    """Client tells server it's leaving a group's chat room."""
     group_id = data['group_id']
     leave_room(group_id)
     print(f"Client left room: {group_id}")
