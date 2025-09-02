@@ -13,11 +13,13 @@
     <div class="auth-container">
         {% with messages = get_flashed_messages() %}
           {% if messages %}
-            <ul class="flash-messages">
-              {% for message in messages %}
-                <li>{{ message }}</li>
-              {% endfor %}
-            </ul>
+            <div id="flash-container">
+                <ul class="flash-messages">
+                  {% for message in messages %}
+                    <li>{{ message }}</li>
+                  {% endfor %}
+                </ul>
+            </div>
           {% endif %}
         {% endwith %}
     
@@ -64,6 +66,37 @@
         if (showRegister) {
             toggleForms();
         }
+
+        // --- NEW SCRIPT TO HIDE FLASH MESSAGES ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const flashContainer = document.getElementById('flash-container');
+            
+            // If there are no flash messages on the page, do nothing.
+            if (!flashContainer) {
+                return;
+            }
+
+            // Get all user input fields within the main auth container.
+            const formInputs = document.querySelectorAll('.auth-container input, .auth-container select, .auth-container textarea');
+
+            // This function fades out and then hides the flash message container.
+            const hideFlashMessages = () => {
+                if (flashContainer) {
+                    flashContainer.style.transition = 'opacity 0.5s ease';
+                    flashContainer.style.opacity = '0';
+                    // Wait for the fade-out transition to finish before hiding the element completely.
+                    setTimeout(() => {
+                        flashContainer.style.display = 'none';
+                    }, 500);
+                }
+            };
+
+            // Add an event listener to each input field.
+            // The message will disappear as soon as the user clicks on any field.
+            formInputs.forEach(input => {
+                input.addEventListener('focus', hideFlashMessages, { once: true }); // { once: true } makes it run only one time
+            });
+        });
     </script>
 </body>
 </html>

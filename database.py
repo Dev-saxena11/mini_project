@@ -34,22 +34,20 @@ def get_db_connection():
     return conn
 
 # --- DATABASE SETUP ---
-
 def setup_database():
     """Creates all database tables if they don't exist."""
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Users table - REMOVED current_group_id and is_group_owner
+    # Users table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Users (
         userid TEXT PRIMARY KEY,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
-        phone_no TEXT UNIQUE,
+        phone_no TEXT,
         gender TEXT CHECK(gender IN ('Male', 'Female', 'Other')),
-        marital_status TEXT CHECK(marital_status IN ('Single', 'Married', 'Divorced', 'Widowed')),
         bio TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
@@ -60,7 +58,7 @@ def setup_database():
     CREATE TABLE IF NOT EXISTS Destinations (
         destination_id TEXT PRIMARY KEY,
         destination_name TEXT UNIQUE NOT NULL,
-        country TEXT NOT NULL
+        country TEXT
     );
     """)
 
@@ -116,19 +114,22 @@ def setup_database():
 
 # --- USER MANAGEMENT ---
 
-def add_user(username, password, email, **kwargs):
-    is_valid, message = validate_password(password)
-    if not is_valid: return None
-    if not validate_email(email): return None
+def add_user(username, hashed_password, email, **kwargs):
+    """
+    Adds a new user to the database with a pre-hashed password.
+    Password validation should be done before calling this function.
+    """
+    if not validate_email(email): 
+        return None
 
     user_id = generate_id()
     conn = get_db_connection()
     try:
         conn.execute(
-            """INSERT INTO Users (userid, username, password, email, phone_no, gender, marital_status, bio) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user_id, username, password, email, kwargs.get('phone_no'), 
-             kwargs.get('gender'), kwargs.get('marital_status'), kwargs.get('bio'))
+            """INSERT INTO Users (userid, username, password, email, phone_no, gender, bio) 
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (user_id, username, hashed_password, email, kwargs.get('phone_no'), 
+             kwargs.get('gender'), kwargs.get('bio'))
         )
         conn.commit()
         return user_id
@@ -136,6 +137,8 @@ def add_user(username, password, email, **kwargs):
         return None
     finally:
         conn.close()
+
+
 
 # --- DESTINATION MANAGEMENT ---
 

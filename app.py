@@ -3,10 +3,11 @@ from flask import Flask, render_template, request, session, redirect, flash, jso
 from flask_socketio import SocketIO, join_room, leave_room, emit
 import database
 from datetime import datetime
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # --- APP & SOCKETIO INITIALIZATION ---
 app = Flask(__name__)
-app.secret_key = "my_secret_123"
+app.secret_key = "a_much_more_secure_secret_key_123!"
 socketio = SocketIO(app)
 
 # --- DATABASE INITIALIZATION ---
@@ -17,16 +18,19 @@ def initialize_database():
 
 # --- HELPER FUNCTION ---
 def validate_user_session():
-    """Checks if the username in the session exists in the database."""
-    username = session.get("username")
-    if not username:
+    """
+    Checks if the userid in the session exists in the database.
+    Returns the database connection and user data if valid.
+    """
+    user_id = session.get("user_id")
+    if not user_id:
         return None, None  # No user in session
 
     conn = database.get_db_connection()
-    user = conn.execute("SELECT * FROM Users WHERE username=?", (username,)).fetchone()
+    user = conn.execute("SELECT * FROM Users WHERE userid = ?", (user_id,)).fetchone()
     
     if not user:
-        session.pop("username", None)
+        session.clear()
         flash("Your session was invalid. Please log in again.", "warning")
         conn.close()
         return None, None
@@ -62,41 +66,50 @@ def auth():
         if action == "register":
             show_register = True
             email = request.form.get("email")
-            phone_no = request.form.get("phone_no") or None
-            gender = request.form.get("gender") or None
-            marital_status = request.form.get("marital_status") or None
-            bio = request.form.get("bio") or None
+            
+            # --- FIX: Validate the plain-text password here, BEFORE hashing ---
+            is_valid, message = database.validate_password(password)
+            if not is_valid:
+                flash(f"⚠️ {message}", "error")
+                return render_template("auth.html", show_register=True)
+
+            # Hash the password after it has been validated
+            hashed_password = generate_password_hash(password)
 
             user_id = database.add_user(
-                username, password, email,
-                phone_no=phone_no, gender=gender,
-                marital_status=marital_status, bio=bio
+                username, hashed_password, email,
+                phone_no=request.form.get("phone_no") or None,
+                gender=request.form.get("gender") or None,
+                bio=request.form.get("bio") or None
             )
-            if not user_id:
-                flash("⚠️ Registration failed. Username/email may exist or password is too weak.", "error")
-            else:
+            if user_id:
+                session["user_id"] = user_id
                 session["username"] = username
                 flash("✅ Registration successful! Welcome.", "success")
                 return redirect('/home')
+            else:
+                flash("⚠️ Registration failed. Username or email may already be in use.", "error")
 
         elif action == "login":
             conn = database.get_db_connection()
-            user = conn.execute("SELECT * FROM Users WHERE username=? AND password=?", (username, password)).fetchone()
+            user = conn.execute("SELECT * FROM Users WHERE username = ?", (username,)).fetchone()
             conn.close()
-            if not user:
-                flash("❌ Invalid username or password.", "error")
-            else:
-                session["username"] = username
+
+            if user and check_password_hash(user['password'], password):
+                session["user_id"] = user['userid']
+                session["username"] = user['username']
                 flash("✅ Login successful!", "success")
                 return redirect('/home')
+            else:
+                flash("❌ Invalid username or password.", "error")
 
     return render_template("auth.html", show_register=show_register)
 
 @app.route("/logout")
 def logout():
-    session.pop("username", None)
-    flash("👋 You have been logged out.")
-    return redirect('/home')
+    session.clear()
+    flash("👋 You have been logged out.", "info")
+    return redirect('/auth')
 
 # --- USER DASHBOARD ---
 @app.route('/user')
@@ -105,11 +118,17 @@ def user():
     if not user_data:
         return redirect("/auth")
     
-    # Fetch all groups the user is a part of
-    user_groups = database.get_user_groups(user_data['userid'])
+    current_group = database.get_user_groups(user_data['userid'])
+    group = current_group[0] if current_group else None
     
+    members = []
+    if group:
+        members = database.get_group_members(group['group_id'])
+
     conn.close()
-    return render_template("user.html", user=user_data, groups=user_groups)
+    return render_template("user.html", user=user_data, group=group, members=members)
+
+
 
 # --- GROUP ROUTES ---
 @app.route('/groups', methods=["GET", "POST"])
@@ -140,7 +159,6 @@ def groups():
         return redirect("/groups")
 
     destinations = database.get_all_destinations()
-    # Updated query to check membership from GroupMembers table
     groups_list = conn.execute("""
         SELECT g.*, u.username as owner_name, d.destination_name,
                (SELECT 1 FROM GroupMembers gm WHERE gm.group_id = g.group_id AND gm.user_id = ?) as is_member
@@ -153,10 +171,9 @@ def groups():
     return render_template('groups.html', groups=groups_list, user=user, destinations=destinations)
 
 @app.route('/groups/join/<group_id>')
-def join_group(group_id):
+def join_group_route(group_id):
     conn, user = validate_user_session()
-    if not user:
-        return redirect("/auth")
+    if not user: return redirect("/auth")
     conn.close() 
 
     if database.join_group(user['userid'], group_id):
@@ -166,7 +183,7 @@ def join_group(group_id):
     return redirect("/groups")
 
 @app.route('/groups/leave/<group_id>')
-def leave_group(group_id):
+def leave_group_route(group_id):
     conn, user = validate_user_session()
     if not user: return redirect("/auth")
     conn.close()
@@ -178,7 +195,7 @@ def leave_group(group_id):
     return redirect("/groups")
 
 @app.route('/groups/delete/<group_id>')
-def delete_group(group_id):
+def delete_group_route(group_id):
     conn, user = validate_user_session()
     if not user: return redirect("/auth")
     
