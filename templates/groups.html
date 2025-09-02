@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Together - Groups</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="navbar">
@@ -15,9 +14,10 @@
         <nav class="nav-links" id="nav-links">
             <a href="/home">Home</a>
             <a href="/user">User Dashboard</a>
-            <a href="/groups">Groups</a>
+            <a href="/groups" class="active">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
+            
         </nav>
         <div class="menu-toggle" id="menu-toggle">
             <div class="bar"></div>
@@ -30,7 +30,6 @@
         <div class="groups-container">
             <h2>✈️ Find or Create Your Group</h2>
 
-            <!-- Group Creation is always available -->
             <div class="dashboard-card" style="margin-bottom: 40px;">
                 <h3 style="text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: var(--primary-color);">Create a New Adventure</h3>
                 <form method="POST" action="/groups" class="group-form">
@@ -76,19 +75,12 @@
                             <p class="desc">{{ group['group_description'] or "No description" }}</p>
 
                             <div class="group-actions">
-                                <!-- Chat is available if user is a member -->
                                 {% if group['is_member'] %}
                                     <a href="/groups/chat/{{ group['group_id'] }}" class="btn chat-btn">💬 Open Chat</a>
                                 {% endif %}
-
-                                <!-- Show Join/Leave/Delete buttons based on membership and ownership -->
                                 {% if group['is_member'] %}
                                     {% if user['userid'] == group['owner_id'] %}
-                                        <a href="/groups/delete/{{ group['group_id'] }}" 
-                                           class="btn delete-btn"
-                                           onclick="return confirm('Are you sure you want to PERMANENTLY delete this group?');">
-                                           🗑️ Delete
-                                        </a>
+                                        <a href="/groups/delete/{{ group['group_id'] }}" class="btn delete-btn" onclick="return confirm('Are you sure you want to PERMANENTLY delete this group?');">🗑️ Delete</a>
                                     {% else %}
                                         <a href="/groups/leave/{{ group['group_id'] }}" class="btn delete-btn">🚪 Leave</a>
                                     {% endif %}
@@ -113,47 +105,6 @@
         <p>© 2025 Mini Project</p>
     </footer>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuToggle = document.getElementById('menu-toggle');
-            const navLinks = document.getElementById('nav-links');
-            menuToggle.addEventListener('click', () => {
-                navLinks.classList.toggle('active');
-            });
-
-            const searchInput = document.getElementById('group-search');
-            const typeFilter = document.getElementById('group-type-filter');
-            const groupItems = document.querySelectorAll('.group-list .group-item');
-
-            function filterGroups() {
-                const searchTerm = searchInput.value.toLowerCase();
-                const selectedType = typeFilter.value;
-
-                groupItems.forEach(item => {
-                    const groupName = item.querySelector('h3').textContent.toLowerCase();
-                    const destination = item.querySelector('p:nth-of-type(1)').textContent.toLowerCase();
-                    const description = item.querySelector('.desc').textContent.toLowerCase();
-                    const fullText = groupName + destination + description;
-                    
-                    const groupTypeSpan = item.querySelector('h3 .type');
-                    const groupType = groupTypeSpan ? groupTypeSpan.textContent.replace(/[()]/g, '') : '';
-
-                    const searchMatch = fullText.includes(searchTerm);
-                    const typeMatch = (selectedType === 'All' || groupType === selectedType);
-
-                    if (searchMatch && typeMatch) {
-                        item.style.display = '';
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-            }
-
-            if (searchInput && typeFilter) {
-                searchInput.addEventListener('input', filterGroups);
-                typeFilter.addEventListener('change', filterGroups);
-            }
-        });
-    </script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
