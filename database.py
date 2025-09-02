@@ -40,7 +40,7 @@ def setup_database():
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    # Users table
+    # Users table - REMOVED current_group_id and is_group_owner
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Users (
         userid TEXT PRIMARY KEY,
@@ -51,10 +51,7 @@ def setup_database():
         gender TEXT CHECK(gender IN ('Male', 'Female', 'Other')),
         marital_status TEXT CHECK(marital_status IN ('Single', 'Married', 'Divorced', 'Widowed')),
         bio TEXT,
-        current_group_id TEXT,
-        is_group_owner BOOLEAN DEFAULT FALSE,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (current_group_id) REFERENCES Groups (group_id) ON DELETE SET NULL
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
     """)
 
@@ -67,7 +64,7 @@ def setup_database():
     );
     """)
 
-    # Groups table - NOW WITH DESTINATION LINK
+    # Groups table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS Groups (
         group_id TEXT PRIMARY KEY,
@@ -161,7 +158,6 @@ def find_or_create_destination(name):
     conn = get_db_connection()
     
     try:
-        # Check if destination exists
         cursor = conn.cursor()
         cursor.execute("SELECT destination_id FROM Destinations WHERE destination_name = ?", (clean_name,))
         result = cursor.fetchone()
@@ -169,9 +165,7 @@ def find_or_create_destination(name):
         if result:
             return result['destination_id']
         else:
-            # Create it if it doesn't exist
             new_id = generate_id()
-            # For simplicity, we'll add a placeholder country for now
             cursor.execute(
                 "INSERT INTO Destinations (destination_id, destination_name, country) VALUES (?, ?, ?)",
                 (new_id, clean_name, "Unknown")
@@ -192,11 +186,11 @@ def add_group(group_name, group_type, owner_id, destination_id, group_descriptio
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT username, current_group_id FROM Users WHERE userid = ?", (owner_id,))
+        cursor.execute("SELECT username FROM Users WHERE userid = ?", (owner_id,))
         user = cursor.fetchone()
 
-        if not user or user['current_group_id']:
-            return None
+        if not user:
+            return None # User does not exist
 
         group_id = generate_id()
         owner_username = user['username']
@@ -211,11 +205,6 @@ def add_group(group_name, group_type, owner_id, destination_id, group_descriptio
             "INSERT INTO GroupMembers (member_id, group_id, user_id, username, role) VALUES (?, ?, ?, ?, ?)",
             (generate_id(), group_id, owner_id, owner_username, 'Owner')
         )
-        # Update user's status
-        cursor.execute(
-            "UPDATE Users SET current_group_id = ?, is_group_owner = TRUE WHERE userid = ?",
-            (group_id, owner_id)
-        )
         conn.commit()
         return group_id
     except sqlite3.Error:
@@ -228,10 +217,10 @@ def join_group(user_id, group_id):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT username, current_group_id FROM Users WHERE userid = ?", (user_id,))
+        cursor.execute("SELECT username FROM Users WHERE userid = ?", (user_id,))
         user = cursor.fetchone()
         
-        if not user or user['current_group_id']: return False
+        if not user: return False
 
         cursor.execute("SELECT member_count, max_members FROM Groups WHERE group_id = ?", (group_id,))
         group = cursor.fetchone()
@@ -241,45 +230,49 @@ def join_group(user_id, group_id):
             "INSERT INTO GroupMembers (member_id, group_id, user_id, username) VALUES (?, ?, ?, ?)",
             (generate_id(), group_id, user_id, user['username'])
         )
-        cursor.execute("UPDATE Users SET current_group_id = ? WHERE userid = ?", (group_id, user_id))
         cursor.execute("UPDATE Groups SET member_count = member_count + 1 WHERE group_id = ?", (group_id,))
         conn.commit()
         return True
-    except sqlite3.IntegrityError:
+    except sqlite3.IntegrityError: # Handles user trying to join the same group twice
         return False
     except sqlite3.Error:
         return False
     finally:
         conn.close()
 
-def leave_group(user_id):
-    """Removes a user from their current group."""
+def leave_group(user_id, group_id):
+    """Removes a user from a specific group."""
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("SELECT current_group_id, is_group_owner FROM Users WHERE userid = ?", (user_id,))
-        user = cursor.fetchone()
+        # Check user's role in this specific group
+        member = cursor.execute("SELECT role FROM GroupMembers WHERE user_id = ? AND group_id = ?", (user_id, group_id)).fetchone()
         
-        if not user or not user['current_group_id'] or user['is_group_owner']:
+        # Prevent owners from leaving; they must delete the group
+        if not member or member['role'] == 'Owner':
             return False
 
-        group_id = user['current_group_id']
         cursor.execute("DELETE FROM GroupMembers WHERE user_id = ? AND group_id = ?", (user_id, group_id))
-        cursor.execute("UPDATE Users SET current_group_id = NULL WHERE userid = ?", (user_id,))
         cursor.execute("UPDATE Groups SET member_count = member_count - 1 WHERE group_id = ?", (group_id,))
         conn.commit()
         return True
-    except sqlite3.Error:
+    except sqlite3.Error as e:
+        print(f"Error in leave_group: {e}")
         return False
     finally:
         conn.close()
 
-def delete_group(group_id):
-    """Deletes a group and all associated data."""
+def delete_group(group_id, user_id):
+    """Deletes a group if the user is the owner."""
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        cursor.execute("UPDATE Users SET current_group_id = NULL, is_group_owner = FALSE WHERE current_group_id = ?", (group_id,))
+        # Verify ownership
+        group = cursor.execute("SELECT owner_id FROM Groups WHERE group_id = ?", (group_id,)).fetchone()
+        if not group or group['owner_id'] != user_id:
+            return False
+
+        # The ON DELETE CASCADE constraint will handle deleting members
         cursor.execute("DELETE FROM Groups WHERE group_id = ?", (group_id,))
         conn.commit()
         return True
@@ -288,17 +281,18 @@ def delete_group(group_id):
     finally:
         conn.close()
 
-def get_user_group(user_id):
-    """Fetches the full details of a user's current group."""
+def get_user_groups(user_id):
+    """Fetches all groups a user is a member of."""
     conn = get_db_connection()
-    group = conn.execute("""
-        SELECT g.*, d.destination_name FROM Groups g 
+    groups = conn.execute("""
+        SELECT g.*, d.destination_name, gm.role 
+        FROM Groups g 
+        JOIN GroupMembers gm ON g.group_id = gm.group_id
         LEFT JOIN Destinations d ON g.destination_id = d.destination_id
-        JOIN Users u ON g.group_id = u.current_group_id 
-        WHERE u.userid = ?
-    """, (user_id,)).fetchone()
+        WHERE gm.user_id = ?
+    """, (user_id,)).fetchall()
     conn.close()
-    return group
+    return groups
 
 def get_group_members(group_id):
     """Fetches details of all members in a given group."""
@@ -313,12 +307,6 @@ def get_group_members(group_id):
     conn.close()
     return members
 
-# database.py
-
-# ... (keep all existing functions) ...
-
-# --- RECOMMENDATION ENGINE ---
-
 def get_popular_destinations(limit=3):
     """
     Fetches the most popular destinations based on the number of groups.
@@ -327,7 +315,6 @@ def get_popular_destinations(limit=3):
     conn = get_db_connection()
     try:
         cursor = conn.cursor()
-        # Query to count groups per destination and order by that count
         query = """
             SELECT d.destination_name
             FROM Groups g
@@ -337,7 +324,6 @@ def get_popular_destinations(limit=3):
             LIMIT ?
         """
         results = cursor.execute(query, (limit,)).fetchall()
-        # Extract just the names from the query result
         destinations = [row['destination_name'] for row in results]
         return destinations
     except sqlite3.Error as e:
