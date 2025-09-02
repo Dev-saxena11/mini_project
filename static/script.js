@@ -13,14 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let chatHistory = [];
     let quickActionsVisible = true;
 
-    // === Chatbot Knowledge Base ===
-    const responses = {
-        "how it works": "Travel Together connects travelers! 🌍 You can browse destinations, join or create groups, and connect with like-minded adventurers to plan amazing journeys together!",
-        "join groups": "It's simple! 👥 Go to the 'Groups' section, find a trip that interests you, and click 'Join Group'. You can find your perfect travel match!",
-        "features": "We offer lots of features! ✨ Browse and join groups, create your own trips, a user dashboard, this travel assistant, and group chats!",
-        "default": "I can help with that! 🤔 Try asking about how Travel Together works, joining groups, or our features. You can also use the quick action buttons."
-    };
-
     // === Event Listeners ===
     if (menuToggle) menuToggle.addEventListener('click', () => navLinks.classList.toggle('active'));
     if (clearChatBtn) clearChatBtn.addEventListener('click', clearChat);
@@ -106,33 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
     /** Simulates the bot's response generation */
     function generateBotResponse(userMessage) {
         showTyping();
-        setTimeout(() => {
-            hideTyping();
-            const lowerMessage = userMessage.toLowerCase();
-            let response = responses.default; // Default response
-            for (const key in responses) {
-                if (lowerMessage.includes(key)) {
-                    response = responses[key];
-                    break;
-                }
-            }
-            addMessage(response, 'bot');
-        }, 1200);
-    }
-
-    
-
-    /** Simulates the bot's response generation */
-    function generateBotResponse(userMessage) {
-        showTyping();
         const lowerMessage = userMessage.toLowerCase();
 
         // --- Local First Response Check ---
-        // You can keep some instant, hardcoded responses for speed
         const localResponses = {
-            "how it works": "Travel Together connects travelers! 訣 You can browse destinations, join or create groups, and connect with like-minded adventurers to plan amazing journeys together!",
-            "join groups": "It's simple! 則 Go to the 'Groups' section, find a trip that interests you, and click 'Join Group'. You can find your perfect travel match!",
-            "features": "We offer lots of features! 笨ｨ Browse and join groups, create your own trips, a user dashboard, this travel assistant, and group chats!"
+            "how it works": "Travel Together connects travelers! 🌍 You can browse destinations, join or create groups, and connect with like-minded adventurers to plan amazing journeys together!",
+            "join groups": "It's simple! 👥 Go to the 'Groups' section, find a trip that interests you, and click 'Join Group'. You can find your perfect travel match!",
+            "features": "We offer lots of features! ✨ Browse and join groups, create your own trips, a user dashboard, this travel assistant, and group chats!"
         };
 
         for (const key in localResponses) {
@@ -169,8 +141,6 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessage("Sorry, I'm having trouble connecting right now. Please try again later.", 'bot');
         });
     }
-
-
     
     /** Clears the chat UI, history, and local storage */
     function clearChat() {
@@ -224,5 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Initial Load ---
-    loadChatHistory();
+    if(chatbotContainer) {
+        loadChatHistory();
+    }
 });

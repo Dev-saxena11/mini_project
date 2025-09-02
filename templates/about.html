@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Together - About Us</title>
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
-<body>
+<body class="about-page">
     <header class="navbar">
         <div class="logo">
             <p>Travel Together</p>
@@ -36,38 +37,74 @@
             <h2>Meet the Creators</h2>
             <p class="team-intro">We are a passionate team of developers who brought Travel Together to life. Get to know the minds behind the code.</p>
             
-            <div class="team-grid">
+            <div class="team-row">
                 <div class="team-card">
-                    <img src="/static/images/aryan.jpg" alt="Team member Aryan">
-                    <h3>Aryan</h3>
-                    <p class="role">The Vibe Coder</p>
-                    <p class="desc">Weaving elegant code and infectious energy to sculpt intuitive, beautiful user journeys from start to finish.</p>
+                    <div class="card-border"></div>
+                    <div class="card-content">
+                        <img src="/static/images/aryan.jpg" alt="Team member Aryan">
+                        <h3>Aryan</h3>
+                        <p class="role">The Vibe Coder</p>
+                        <p class="desc">Weaving elegant code and infectious energy to sculpt intuitive, beautiful user journeys.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
                 </div>
                 <div class="team-card">
-                    <img src="/static/images/rachit.jpg" alt="Team member Rachit">
-                    <h3>Rachit</h3>
-                    <p class="role">The Database Expert</p>
-                    <p class="desc">As the guardian of our digital universe, he ensures every piece of data is perfectly structured, instantly accessible, and completely secure.</p>
+                    <div class="card-border"></div>
+                    <div class="card-content">
+                        <img src="/static/images/rachit.jpg" alt="Team member Rachit">
+                        <h3>Rachit</h3>
+                        <p class="role">The Database Expert</p>
+                        <p class="desc">Guardian of our digital universe, ensuring every piece of data is perfectly structured and secure.</p>
+                        <div class="social-links">
+                            <a href="#"><i class="fab fa-linkedin"></i></a>
+                            <a href="#"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
                 </div>
                 <div class="team-card">
-                    <img src="/static/images/anurag.jpg" alt="Team member Anurag">
-                    <h3>Anurag</h3>
-                    <p class="role">The Frontend Specialist</p>
-                    <p class="desc">Translating creative vision into a living, breathing interface. He meticulously crafts every button, transition, and pixel you see and touch.</p>
-                </div>
-                <div class="team-card">
-                    <img src="/static/images/dev.jpg" alt="Team member Dev">
-                    <h3>Dev</h3>
-                    <p class="role">The AI Expert</p>
-                    <p class="desc">The mind behind the machine. He breathes intelligence into our Travel Assistant, enabling it to learn, assist, and guide your journey.</p>
+                    <div class="card-border"></div>
+                    <div class="card-content">
+                        <img src="/static/images/anurag.jpg" alt="Team member Anurag">
+                        <h3>Anurag</h3>
+                        <p class="role">The Frontend Specialist</p>
+                        <p class="desc">Translating creative vision into a living interface, crafting every pixel you see and touch.</p>
+                        <div class="social-links">
+                           <a href="#"><i class="fab fa-linkedin"></i></a>
+                           <a href="#"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="team-grid-center">
+
+            <div class="team-row">
                 <div class="team-card">
-                    <img src="/static/images/rudra.jpg" alt="Team member Rudra">
-                    <h3>Rudra</h3>
-                    <p class="role">The Backend Expert</p>
-                    <p class="desc">The powerhouse of our platform. He engineers the robust, high-performance engine that drives every feature, from user accounts to group chats.</p>
+                    <div class="card-border"></div>
+                    <div class="card-content">
+                        <img src="/static/images/dev.jpg" alt="Team member Dev">
+                        <h3>Dev</h3>
+                        <p class="role">The AI Expert</p>
+                        <p class="desc">The mind behind the machine, breathing intelligence into our Travel Assistant.</p>
+                         <div class="social-links">
+                           <a href="#"><i class="fab fa-linkedin"></i></a>
+                           <a href="#"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
+                </div>
+                 <div class="team-card">
+                     <div class="card-border"></div>
+                     <div class="card-content">
+                        <img src="/static/images/rudra.jpg" alt="Team member Rudra">
+                        <h3>Rudra</h3>
+                        <p class="role">The Backend Expert</p>
+                        <p class="desc">The powerhouse of our platform, engineering the robust engine that drives every feature.</p>
+                         <div class="social-links">
+                           <a href="#"><i class="fab fa-linkedin"></i></a>
+                           <a href="#"><i class="fab fa-github"></i></a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -78,5 +115,42 @@
     </footer>
 
     <script src="/static/script.js"></script>
+    <button class="chatbot-toggle" onclick="toggleChatbot()" id="chatbot-toggle-btn">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
+    </button>
+    
+    <div class="chatbot-container" id="chatbot-container">
+        <div class="chatbot-header">
+            <h3>Travel Assistant</h3>
+            <div class="header-buttons">
+                <button class="clear-chat" id="clear-chat-btn" title="Clear Chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 17H6c-1.66 0-3-1.34-3-3s1.34-3 3-3l.71.05C7.56 9.42 9.61 8 12 8c2.61 0 4.75 1.94 4.95 4.38L17 12h-2v5z"></path></svg>
+                </button>
+                <button class="close-chat" onclick="closeChatbot()" title="Close Chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="20" height="20"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg>
+                </button>
+            </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message bot-message typing-indicator" id="typing-indicator">
+                <p><span></span><span></span><span></span></p>
+            </div>
+        </div>
+        <div class="quick-actions" id="quick-actions">
+            <button class="quick-action" onclick="sendQuickMessage('How it works')">How it works</button>
+            <button class="quick-action" onclick="sendQuickMessage('Join groups')">Join groups</button>
+            <button class="quick-action" onclick="sendQuickMessage('What are the features?')">Features</button>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chat-input" placeholder="Ask something..." onkeypress="handleKeyPress(event)">
+            <button class="send-button" onclick="sendMessage()">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+            </button>
+        </div>
+    </div>
+    
+    <script src="/static/script.js"></script>
+</body>
+</html>
 </body>
 </html>
