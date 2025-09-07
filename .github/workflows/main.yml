@@ -47,7 +47,8 @@ jobs:
 
       - name: Set up Android SDK and NDK
         run: |
-          wget https://dl.google.com/android/repository/commandlineto...
+          # Use the new, updated download link for the command line tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           mkdir -p $HOME/android-sdk
           unzip cmdline-tools.zip -d $HOME/android-sdk
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
@@ -65,7 +66,6 @@ jobs:
           echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Run the Buildozer build
-        # This 'env' block forces the license acceptance for Buildozer
         env:
           ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: buildozer -v android debug
