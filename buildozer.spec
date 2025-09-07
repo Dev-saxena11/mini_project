@@ -24,7 +24,7 @@ version = 0.2
 
 # (list) Application requirements
 # ADDED flask, which was the critical missing piece
-requirements = python3,kivy,flask
+requirements = python3,kivy,flask,jnius
 
 # (list) Supported orientations
 orientation = portrait
