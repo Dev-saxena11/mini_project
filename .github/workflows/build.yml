@@ -37,7 +37,6 @@ jobs:
             openjdk-11-jdk \
             python3-setuptools \
             python3-wheel \
-            python3-cython \
             libffi-dev \
             libssl-dev \
             libsqlite3-dev \
@@ -81,3 +80,9 @@ jobs:
       - name: Build with Buildozer
         run: |
           buildozer android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: my-kivy-app-apk
+          path: bin/*.apk
