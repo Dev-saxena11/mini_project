@@ -1,0 +1,40 @@
+# .github/workflows/main.yml
+
+# This file tells GitHub Actions how to build your Kivy APK.
+
+# 1. Name of the workflow
+name: Build Kivy APK
+
+# 2. Trigger: This workflow will run on every push to the 'main' or 'master' branch.
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-android:
+    # 3. Runner: Use a standard Ubuntu virtual machine provided by GitHub.
+    runs-on: ubuntu-latest
+
+    steps:
+      # 4. Step 1: Check out your repository code so the workflow can access it.
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 5. Step 2: Run the Buildozer action.
+      # This uses a pre-made Docker container with all the Android build tools.
+      - name: Build with Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          # The command to run. '-v' gives verbose output for debugging.
+          command: buildozer -v android debug
+
+      # 6. Step 3: Upload the APK as an artifact.
+      # This makes the final APK available for download from the GitHub Actions page.
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          # The name of the artifact bundle.
+          name: package
+          # The path to the file to upload. Buildozer places the APK in the bin/ directory.
+          path: ${{ steps.buildozer.outputs.filename }}
