@@ -46,13 +46,11 @@ jobs:
           pip install buildozer
           pip install cython==0.29.34
 
-      # --- NEW STEP ADDED HERE ---
-      - name: Accept Android SDK licenses
-        # The sdkmanager path is automatically added by buildozer
-        run: yes | sdkmanager --licenses
-
+      # The env variable below tells Buildozer to auto-accept licenses
       - name: Build with Buildozer
         run: buildozer -v android debug
+        env:
+          ANDROID_SDK_LICENSE_ALL: "y"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
