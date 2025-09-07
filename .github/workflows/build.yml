@@ -18,14 +18,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Step 1: Install Java, which is required for the Android SDK tools
       - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
           java-version: '11'
           distribution: 'temurin'
 
-      # Step 2: Install all the usual Buildozer system dependencies
       - name: Install Buildozer system dependencies
         run: |
           sudo apt-get update
@@ -49,7 +47,7 @@ jobs:
               gstreamer1.0-plugins-good \
               libzip-dev
 
-      # Step 3: Manually download and set up the Android Command Line Tools
+      # --- THIS STEP IS NOW CORRECTED ---
       - name: Download and set up Android SDK
         run: |
           SDK_URL="https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip"
@@ -58,27 +56,22 @@ jobs:
           wget -q $SDK_URL -O android-sdk.zip
           unzip -q android-sdk.zip -d $SDK_DIR
           rm android-sdk.zip
-          # Move tools to the expected location
-          mkdir -p $SDK_DIR/cmdline-tools/latest
-          mv $SDK_DIR/cmdline-tools/* $SDK_DIR/cmdline-tools/latest/
+          # Correctly rename the unzipped folder to 'latest' and place it inside 'cmdline-tools'
+          mkdir -p $SDK_DIR/cmdline-tools
+          mv $SDK_DIR/cmdline-tools $SDK_DIR/cmdline-tools/latest
 
-      # Step 4: Add the SDK to the PATH, accept licenses, and install required packages
       - name: Configure SDK and Accept Licenses
         run: |
           SDK_DIR="$HOME/android-sdk"
           echo "PATH=$PATH:$SDK_DIR/cmdline-tools/latest/bin:$SDK_DIR/platform-tools" >> $GITHUB_ENV
           echo "ANDROID_HOME=$SDK_DIR" >> $GITHUB_ENV
-          # Accept licenses
           yes | sdkmanager --licenses
-          # Install platform-tools, build-tools, and a platform version
           sdkmanager "platform-tools" "build-tools;33.0.2" "platforms;android-33"
 
-      # Step 5: Install Buildozer and Cython
       - name: Install Buildozer and Cython
         run: |
           pip install buildozer
           pip install cython==0.29.34
 
-      # Step 6: Finally, run the build using the pre-configured environment
       - name: Build with Buildozer
         run: buildozer -v android debug
