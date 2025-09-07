@@ -295,7 +295,10 @@ def handle_leave_room(data):
     leave_room(group_id)
     print(f"Client left room: {group_id}")
 
-# --- RUN APPLICATION ---
-if __name__ == '__main__':
+# In app.py, replace your current run_server function with this one:
+
+def run_server():
+    """This function initializes the database and starts the full SocketIO server."""
     initialize_database()
-    socketio.run(app, debug=True)
+    print("Starting Flask + SocketIO server...")
+    socketio.run(app, host='127.0.0.1', port=5000)
