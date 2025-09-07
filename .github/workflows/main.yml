@@ -1,6 +1,6 @@
 # In .github/workflows/main.yml
 
-name: Build Kivy APK
+name: Build Kivy APK (No Docker)
 
 on:
   push:
@@ -14,13 +14,68 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build with Buildozer using docker run
-        # This uses the official Kivy container with the 'master' tag
+      - name: Set up Java Development Kit (JDK 11)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - name: Install system dependencies for Buildozer
         run: |
-          docker run --rm \
-            -v "$(pwd)":/home/kivy/project \
-            kivy/buildozer:master \
-            bash -c "chown -R kivy:kivy . && buildozer -v android debug"
+          sudo apt-get update
+          sudo apt-get install -y \
+            python3-pip \
+            python3-dev \
+            build-essential \
+            git \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev \
+            liblzma-dev \
+            libbz2-dev \
+            libncurses5-dev \
+            libsqlite3-dev \
+            libreadline-dev \
+            llvm \
+            pkg-config \
+            autoconf \
+            libtool \
+            unzip
+
+      - name: Install Buildozer and project requirements
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython
+          # This installs your app's python requirements.
+          # Ensure your buildozer.spec `requirements` line is correct.
+
+      - name: Set up Android SDK and NDK
+        run: |
+          # Download and set up Android command line tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          mkdir -p $HOME/android-sdk
+          unzip cmdline-tools.zip -d $HOME/android-sdk
+          # Move tools to the expected 'latest' directory
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          mv $HOME/android-sdk/cmdline-tools/bin $HOME/android-sdk/cmdline-tools/latest/
+          mv $HOME/android-sdk/cmdline-tools/lib $HOME/android-sdk/cmdline-tools/latest/
+          
+          # Set environment variables for the rest of the job
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          
+          # Accept licenses and install SDK/NDK components
+          # The versions should match what's needed by your buildozer.spec
+          yes | sdkmanager --licenses > /dev/null
+          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
+          sdkmanager "ndk;25.2.9519653"
+          
+          # Set NDK_HOME env variable
+          echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+
+      - name: Run the Buildozer build
+        run: buildozer -v android debug
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
