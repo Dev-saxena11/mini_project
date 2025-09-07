@@ -11,18 +11,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+      - name: Build with official Buildozer container
+        uses: docker://kivy/buildozer:latest
         with:
-          command: buildozer -v android debug
-          buildozer_version: stable
+          # This command runs the build inside the container.
+          # The 'chown' part is added to prevent file permission issues.
+          args: bash -c "sudo chown -R $(whoami) . && buildozer -v android debug"
 
-      - name: Upload Artifact
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: package
-          path: ${{ steps.buildozer.outputs.filename }}
+          # This uses a wildcard to find the generated APK in the bin/ directory
+          path: bin/*.apk
