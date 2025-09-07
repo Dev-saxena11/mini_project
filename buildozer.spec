@@ -12,14 +12,19 @@ package.domain = com.rudrasingh
 # (str) Source code where the main.py live
 source.dir = .
 
+# (str) Main python file to run
+source.main_py = main.py
+
 # (list) Source files to include (let empty to include all the files)
 source.include_exts = py,png,jpg,kv,atlas
 
 # (str) Application versioning (method 1)
-version = 0.1
+# Increased to 0.2 to avoid conflicts
+version = 0.2
 
-# (list) Application requirements - MINIMAL SET FOR GUARANTEED SUCCESS
-requirements = python3,kivy
+# (list) Application requirements
+# ADDED flask, which was the critical missing piece
+requirements = python3,kivy,flask
 
 # (list) Supported orientations
 orientation = portrait
@@ -40,6 +45,10 @@ android.api = 33
 # (int) Minimum API your APK / AAB will support.
 android.minapi = 21
 
+# (int) Android version code
+# ADDED the version code, increased to 2
+android.versioncode = 2
+
 # (str) Android NDK version to use
 android.ndk = 25c
 
@@ -52,8 +61,9 @@ android.private_storage = True
 # (bool) If True, then automatically accept SDK license agreements
 android.accept_sdk_license = True
 
-# (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.archs = arm64-v8a
+# (list) The Android archs to build for
+# ADDED armeabi-v7a for better compatibility
+android.archs = arm64-v8a, armeabi-v7a
 
 # (bool) enables Android auto backup feature (Android API >=23)
 android.allow_backup = True
