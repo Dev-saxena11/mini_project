@@ -49,9 +49,9 @@ jobs:
             automake \
             libtool \
             pkg-config \
-            libncurses5-dev \
+            libncurses-dev \
             libncursesw5-dev \
-            libtinfo5 \
+            libtinfo6 \
             cmake \
             gettext \
             libltdl-dev \
