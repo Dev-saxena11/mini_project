@@ -1,6 +1,6 @@
 # In .github/workflows/main.yml
 
-name: Build Kivy APK (No Docker)
+name: Build Kivy APK
 
 on:
   push:
@@ -14,17 +14,40 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Change: Specify Python version for consistent builds
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
       - name: Set up Java Development Kit (JDK 11)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '11'
 
+      # Change: Added caching for pip dependencies
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Change: Added caching for Buildozer dependencies (SDK, NDK, etc.)
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('**/buildozer.spec') }}
+          restore-keys: |
+            ${{ runner.os }}-buildozer-
+
       - name: Install system dependencies for Buildozer
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            python3-pip \
             python3-dev \
             build-essential \
             git \
@@ -43,31 +66,30 @@ jobs:
             unzip
 
       - name: Install Buildozer and Cython
-        run: pip install --upgrade pip buildozer cython
+        run: python -m pip install --upgrade pip buildozer cython
 
       - name: Set up Android SDK and NDK
         run: |
-          # Use the new, updated download link for the command line tools
+          # Change: Updated Android tools download link
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           mkdir -p $HOME/android-sdk
           unzip cmdline-tools.zip -d $HOME/android-sdk
+          # The structure of the unzipped folder has changed in newer versions
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          mv $HOME/android-sdk/cmdline-tools/bin $HOME/android-sdk/cmdline-tools/latest/
-          mv $HOME/android-sdk/cmdline-tools/lib $HOME/android-sdk/cmdline-tools/latest/
+          mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
           
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           
+          # Change: Updated platform and NDK versions
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "ndk;25.2.9519653"
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
           
-          echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/26.1.10909125" >> $GITHUB_ENV
 
       - name: Run the Buildozer build
-        env:
-          ANDROID_ACCEPT_SDK_LICENSE: "1"
         run: buildozer -v android debug
 
       - name: Upload APK as Artifact
