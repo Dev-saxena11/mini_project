@@ -25,7 +25,7 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Install system dependencies
+      - name: Install ALL required system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -44,7 +44,18 @@ jobs:
             libavcodec-dev \
             libgstreamer1.0 \
             gstreamer1.0-plugins-base \
-            gstreamer1.0-plugins-good
+            gstreamer1.0-plugins-good \
+            autoconf \
+            automake \
+            libtool \
+            pkg-config \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            gettext \
+            libltdl-dev \
+            m4
 
       - name: Download and set up Android SDK
         run: |
@@ -87,20 +98,14 @@ jobs:
           pip install --upgrade pip
           pip install cython==0.29.33 buildozer
 
-      - name: Verify AIDL availability
-        run: |
-          export PATH="${HOME}/android-sdk/build-tools/33.0.2:$PATH"
-          which aidl || echo "AIDL not found in PATH"
-          ls -la ${HOME}/android-sdk/build-tools/33.0.2/aidl || echo "AIDL file not found"
-
       - name: Build with Buildozer
         run: |
           export PATH="${HOME}/android-sdk/build-tools/33.0.2:$PATH"
-          buildozer -v android debug
+          buildozer android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
-        if: success()
+        if: always()
         with:
           name: app-debug.apk
           path: bin/*.apk

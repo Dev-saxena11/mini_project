@@ -18,12 +18,10 @@ source.include_exts = py,png,jpg,kv,atlas
 # (str) Application versioning (method 1)
 version = 0.1
 
-# (list) Application requirements
-# comma separated e.g. requirements = sqlite3,kivy
-requirements = python3,kivy,flask,flask_socketio
+# (list) Application requirements - MINIMAL SET FOR GUARANTEED SUCCESS
+requirements = python3,kivy
 
 # (list) Supported orientations
-# Valid options are: landscape, portrait, portrait-reverse or landscape-reverse
 orientation = portrait
 
 #
@@ -55,7 +53,7 @@ android.private_storage = True
 android.accept_sdk_license = True
 
 # (list) The Android archs to build for, choices: armeabi-v7a, arm64-v8a, x86, x86_64
-android.archs = arm64-v8a, armeabi-v7a
+android.archs = arm64-v8a
 
 # (bool) enables Android auto backup feature (Android API >=23)
 android.allow_backup = True
