@@ -1,0 +1,65 @@
+name: Build Android APK
+
+# This action runs automatically on every push to the 'main' branch
+on:
+  push:
+    branches: [ "main" ]
+  # This allows you to run the workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    # Use the latest Ubuntu virtual machine for the build
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Check out your repository code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Set up the correct Python version
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Use a version compatible with your project
+
+      # 3. Install all the system dependencies required by Buildozer
+      - name: Install Buildozer dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+              python3-pip \
+              build-essential \
+              git \
+              python3 \
+              python3-venv \
+              libsdl2-dev \
+              libsdl2-image-dev \
+              libsdl2-mixer-dev \
+              libsdl2-ttf-dev \
+              libportmidi-dev \
+              libswscale-dev \
+              libavformat-dev \
+              libavcodec-dev \
+              zlib1g-dev \
+              libgstreamer1.0-dev \
+              gstreamer1.0-plugins-base \
+              gstreamer1.0-plugins-good \
+              libzip-dev
+
+      # 4. Install Buildozer and Cython using pip
+      - name: Install Buildozer and Cython
+        run: |
+          pip install buildozer
+          pip install cython==0.29.34 # Pinning Cython version can prevent build issues
+
+      # 5. Run the Buildozer build command
+      - name: Build with Buildozer
+        run: buildozer -v android debug
+
+      # 6. Upload the generated APK as an artifact
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: myflaskapp-apk
+          path: bin/*.apk
