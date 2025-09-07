@@ -6,7 +6,7 @@
     <title>{{ group_name }} - Chat</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body data-group-id="{{ group_id }}" data-username="{{ username }}">
 <header class="navbar">
     <div class="logo">Travel Together</div>
     <nav class="nav-links" id="nav-links">
@@ -27,7 +27,12 @@
     <div class="group-chat-container">
         <h2>{{ group_name }}</h2>
         <div class="group-chat-messages" id="messages">
-            <!-- Messages will be injected by JavaScript -->
+            {% for msg in messages %}
+                <div class="message {% if msg.sender_name == username %}sent{% else %}received{% endif %}">
+                    <strong>{{ msg.sender_name }}</strong>
+                    <p>{{ msg.message }}</p>
+                </div>
+            {% endfor %}
         </div>
         <form class="group-chat-form" id="chat-form">
             <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
@@ -41,6 +46,6 @@
 </main>
 
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
-<script src="/static/script.js"></script>
+<script src="/static/group_chat.js"></script>
 </body>
 </html>

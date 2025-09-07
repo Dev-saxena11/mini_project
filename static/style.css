@@ -132,25 +132,51 @@ footer { background-color: var(--theme-bg-secondary); color: var(--theme-text-se
 .group-item .desc { flex-grow: 1; margin-bottom: 20px; }
 .group-actions { display: flex; gap: 10px; margin-top: auto; }
 
-/* --- Group Chat Page --- */
-.group-chat-container { max-width: 900px; margin: 50px auto; background: var(--theme-bg-secondary); border-radius: var(--border-radius); box-shadow: var(--shadow); display: flex; flex-direction: column; height: calc(100vh - 180px); border: 1px solid var(--theme-border); }
-.group-chat-container h2 { text-align: center; padding: 20px; border-bottom: 1px solid var(--theme-border); color: var(--theme-text-primary); }
-.group-chat-messages { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
-.message-container { display: flex; gap: 15px; max-width: 75%; }
-.chat-avatar { width: 40px; height: 40px; border-radius: 50%; }
-.group-chat-message { padding: 12px 18px; border-radius: 20px; position: relative; animation: fadeInUp 0.5s ease; }
-.group-chat-message strong { display: block; margin-bottom: 5px; font-size: 0.9rem; color: var(--secondary-color); }
-.group-chat-message p { margin: 0; line-height: 1.5; }
-.group-chat-message small { font-size: 0.75rem; color: #9ca3af; margin-top: 5px; display: block; text-align: right; }
-.other-message { align-self: flex-start; }
-.other-message .group-chat-message { background-color: #374151; border-bottom-left-radius: 5px; }
-.own-message { align-self: flex-end; flex-direction: row-reverse; }
-.own-message .group-chat-message { background-color: var(--primary-color); color: white; border-bottom-right-radius: 5px; }
-.own-message .group-chat-message small { color: rgba(255,255,255,0.7); }
-.group-chat-form { display: flex; padding: 20px; border-top: 1px solid var(--theme-border); gap: 10px; }
-.group-chat-form input { flex-grow: 1; border: 1px solid var(--theme-border); padding: 12px 18px; border-radius: 50px; background: var(--theme-bg); color: var(--theme-text-primary); }
-.group-chat-form button { background: var(--primary-color); border: none; color: white; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.3s; }
-.group-chat-form button:hover { background: var(--dark-blue); }
+/* --- Group Chat Page (Updated) --- */
+.group-chat-container {max-width: 900px;margin: 50px auto;background: var(--theme-bg-secondary);border-radius: var(--border-radius);box-shadow: var(--shadow);display: flex;flex-direction: column;height: calc(100vh - 180px);border: 1px solid var(--theme-border);
+}
+
+.group-chat-container h2 {text-align: center;padding: 20px;border-bottom: 1px solid var(--theme-border);color: var(--theme-text-primary);
+}
+
+.group-chat-messages {flex-grow: 1;padding: 20px;overflow-y: auto;display: flex;flex-direction: column; /* This makes messages stack vertically */
+}
+
+/* Base style for all message bubbles */
+.message {padding: 10px 15px;border-radius: 18px;margin-bottom: 10px;max-width: 75%;line-height: 1.4;word-wrap: break-word;animation: fadeInUp 0.5s ease;
+}
+
+.message strong {display: block;margin-bottom: 5px;font-size: 0.9rem;color: var(--secondary-color);
+}
+
+.message p {margin: 0;
+}
+
+/* Style for RECEIVED messages (from others) */
+.received {background-color: #374151; /* Dark grey */align-self: flex-start; /* <<< Aligns to the LEFT */border-bottom-left-radius: 5px;
+}
+
+/* Style for SENT messages (from you) */
+.sent {background-color: var(--primary-color); 
+    /* Your theme's blue */
+    color: white;align-self: flex-end;
+    /* <<< Aligns to the RIGHT */
+    border-bottom-right-radius: 5px;
+}
+
+/* Hides your own name on messages you send */
+.sent strong {display: none;
+}
+
+/* Your existing form styling (no changes needed here) */
+.group-chat-form {display: flex;padding: 20px;border-top: 1px solid var(--theme-border);gap: 10px;
+}
+
+.group-chat-form input {flex-grow: 1;border: 1px solid var(--theme-border);padding: 12px 18px;border-radius: 50px;background: var(--theme-bg);color: var(--theme-text-primary);
+}
+.group-chat-form button {background: var(--primary-color);border: none;color: white;border-radius: 50%;width: 50px;height: 50px;display: flex;align-items: center;justify-content: center;cursor: pointer;transition: background 0.3s;
+}
+.group-chat-form button:hover {background: var(--dark-blue);}
 
 /* --- Travel Assistant Page --- */
 .assistant-hero { display: flex; align-items: center; justify-content: center; padding: 60px 5%; min-height: calc(100vh - 160px); }
