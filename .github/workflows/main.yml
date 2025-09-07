@@ -14,16 +14,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build with official Buildozer container
-        uses: docker://kivy/buildozer:1.5.0
-        with:
-          # This command runs the build inside the container.
-          # The 'chown' part is added to prevent file permission issues.
-          args: bash -c "sudo chown -R $(whoami) . && buildozer -v android debug"
+      - name: Build with Buildozer using docker run
+        # This step manually executes the full docker command
+        run: |
+          docker run --rm \
+            -v "$(pwd)":/home/kivy/project \
+            kivy/buildozer:1.5.0 \
+            bash -c "chown -R kivy:kivy . && buildozer -v android debug"
 
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: package
-          # This uses a wildcard to find the generated APK in the bin/ directory
           path: bin/*.apk
