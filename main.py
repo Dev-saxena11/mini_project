@@ -1,55 +1,75 @@
-import webview
+# main.py
+
+# Imports for debugging, Flask, threading, and Kivy
+import traceback
+import threading
+import time
+from flask import Flask
 from kivy.app import App
 from kivy.uix.label import Label
 from kivy.utils import platform
-from kivy.core.window import Window
 
-# --- Android WebView (Pyjnius) - With improved error handling ---
-try:
-    # These imports will only succeed on an actual Android device
-    from jnius import autoclass, JavaException
-    WebView = autoclass('android.webkit.WebView')
-    WebViewClient = autoclass('android.webkit.WebViewClient')
-    Activity = autoclass('org.kivy.android.PythonActivity')
-# Catch the error if jnius isn't installed OR if it can't find the Android classes
-except (ImportError, JavaException):
-    # On desktop, these variables will be None
-    WebView = None
+# --- 1. THE SERVER (Your Flask App) ---
+# This part of the code creates the website.
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def index():
+    # This is the HTML content your app will show.
+    return "<h1>Success!</h1><p>Your Flask server is running inside the Kivy app.</p>"
+
+# We need a function that we can run in a background thread.
+def run_flask_app():
+    flask_app.run(host='127.0.0.1', port=5000)
 
 
-# This Kivy App class will ONLY be used on Android
+# --- 2. THE CLIENT (Your Kivy App for Android) ---
+# This part of the code displays the website on Android.
 class WebApp(App):
     def build(self):
-        self.url = 'http://10.0.2.2:5000' # For Android emulator, this IP points to the host machine
-        
-        # This check is redundant now but good for safety
-        if platform == 'android' and WebView:
-            self.activity = Activity.mActivity
-            self.webview = WebView(self.activity)
-            self.webview.setWebViewClient(WebViewClient())
-            self.webview.getSettings().setJavaScriptEnabled(True)
-            Window.bind(on_resize=self.on_window_resize)
-            self.activity.setContentView(self.webview)
-            self.webview.loadUrl(self.url)
-            return Label(text="Android WebView is active.") # Kivy needs a widget returned
-        
-        # Fallback for safety, though this part of the code shouldn't be reached on desktop.
-        return Label(text="This platform is not supported.")
+        # This try/except block will display any errors on the screen instead of crashing.
+        try:
+            # Start the Flask server in a separate thread.
+            # The 'daemon=True' part means the thread will close when the app closes.
+            server_thread = threading.Thread(target=run_flask_app)
+            server_thread.daemon = True
+            server_thread.start()
+            # Give the server a moment to start up before trying to load the URL.
+            time.sleep(2)
 
-    def on_window_resize(self, window, width, height):
-        if platform == 'android' and hasattr(self, 'webview'):
-            self.webview.layout(0, 0, width, height)
+            # Now, we create the WebView to display the server's content.
+            # This code will only run on Android.
+            from jnius import autoclass
+            WebView = autoclass('android.webkit.WebView')
+            WebViewClient = autoclass('android.webkit.WebViewClient')
+            Activity = autoclass('org.kivy.android.PythonActivity')
+
+            activity = Activity.mActivity
+            webview = WebView(activity)
+            webview.setWebViewClient(WebViewClient())
+            webview.getSettings().setJavaScriptEnabled(True)
+            activity.setContentView(webview)
+
+            # The URL must be 'http://127.0.0.1:5000' because the server
+            # is now running ON THE PHONE itself (also known as 'localhost').
+            webview.loadUrl('http://127.0.0.1:5000')
+
+            # We must return a Kivy widget, but it won't be visible behind the WebView.
+            # This is just to keep Kivy's build process happy.
+            return Label(text="Loading WebView...")
+
+        except Exception as e:
+            # If anything goes wrong, display the full error on the screen.
+            error_message = traceback.format_exc()
+            return Label(text=error_message)
 
 
-# --- Main Execution Block ---
+# --- 3. MAIN EXECUTION ---
 if __name__ == '__main__':
-    # This is the new logic: decide which app to run based on the platform.
-    if platform in ('win', 'linux', 'macosx'):
-        # --- On Desktop, run pywebview directly ---
-        url = 'http://127.0.0.1:5000' # Use localhost for desktop
-        webview.create_window('Your Flask App', url)
-        webview.start() # This is a blocking call that runs on the main thread
-    
-    elif platform == 'android':
-        # --- On Android, run the Kivy App ---
-        WebApp().run() # This is a blocking call that runs on the main thread
+    # For the APK, we only care about the 'android' platform.
+    if platform == 'android':
+        WebApp().run()
+    else:
+        # This allows you to test the server on your desktop.
+        print("Flask server running for desktop testing. Open http://127.0.0.1:5000 in your browser.")
+        run_flask_app()
