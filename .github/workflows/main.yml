@@ -14,7 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Change: Specify Python version for consistent builds
       - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
@@ -26,7 +25,6 @@ jobs:
           distribution: 'temurin'
           java-version: '11'
 
-      # Change: Added caching for pip dependencies
       - name: Cache pip dependencies
         uses: actions/cache@v4
         with:
@@ -35,7 +33,6 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Change: Added caching for Buildozer dependencies (SDK, NDK, etc.)
       - name: Cache Buildozer global directory
         uses: actions/cache@v4
         with:
@@ -70,19 +67,26 @@ jobs:
 
       - name: Set up Android SDK and NDK
         run: |
-          # Change: Updated Android tools download link
+          # Download and unzip to a temporary directory to avoid the 'mv' conflict
           wget https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          mkdir -p $HOME/android-sdk
-          unzip cmdline-tools.zip -d $HOME/android-sdk
-          # The structure of the unzipped folder has changed in newer versions
-          mkdir -p $HOME/android-sdk/cmdline-tools/latest
-          mv $HOME/android-sdk/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+          mkdir -p $HOME/android-sdk-temp
+          unzip cmdline-tools.zip -d $HOME/android-sdk-temp
           
+          # Create the correct final directory structure
+          mkdir -p $HOME/android-sdk/cmdline-tools/latest
+          
+          # Move the unzipped contents to the final destination
+          mv $HOME/android-sdk-temp/cmdline-tools/* $HOME/android-sdk/cmdline-tools/latest/
+          
+          # Clean up the temporary directory
+          rm -rf $HOME/android-sdk-temp
+          
+          # Set environment variables
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
           
-          # Change: Updated platform and NDK versions
+          # Manage SDK packages
           yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "ndk;26.1.10909125"
