@@ -24,30 +24,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            python3-pip \
-            python3-dev \
-            build-essential \
-            git \
-            libffi-dev \
-            libssl-dev \
-            zlib1g-dev \
-            liblzma-dev \
-            libbz2-dev \
-            libncurses5-dev \
-            libsqlite3-dev \
-            libreadline-dev \
-            llvm \
-            pkg-config \
-            autoconf \
-            libtool \
-            unzip
+            python3-pip python3-dev build-essential git libffi-dev libssl-dev \
+            zlib1g-dev liblzma-dev libbz2-dev libncurses5-dev libsqlite3-dev \
+            libreadline-dev llvm pkg-config autoconf libtool unzip
 
-      - name: Install Buildozer and project requirements
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython
-          # This installs your app's python requirements.
-          # Ensure your buildozer.spec `requirements` line is correct.
+      - name: Install Buildozer and Cython
+        run: pip install --upgrade pip buildozer cython
 
       - name: Set up Android SDK and NDK
         run: |
@@ -55,24 +37,26 @@ jobs:
           wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
           mkdir -p $HOME/android-sdk
           unzip cmdline-tools.zip -d $HOME/android-sdk
-          # Move tools to the expected 'latest' directory
           mkdir -p $HOME/android-sdk/cmdline-tools/latest
           mv $HOME/android-sdk/cmdline-tools/bin $HOME/android-sdk/cmdline-tools/latest/
           mv $HOME/android-sdk/cmdline-tools/lib $HOME/android-sdk/cmdline-tools/latest/
           
-          # Set environment variables for the rest of the job
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          # --- FIX ---
+          # Set environment variables for the CURRENT step using export
+          export ANDROID_HOME=$HOME/android-sdk
+          export PATH="$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools"
           
-          # Accept licenses and install SDK/NDK components
-          # The versions should match what's needed by your buildozer.spec
+          # Set environment variables for FUTURE steps using GITHUB_ENV
+          echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+          echo "$ANDROID_HOME/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_HOME/platform-tools" >> $GITHUB_PATH
+          
+          # Now that the path is set, run sdkmanager
           yes | sdkmanager --licenses > /dev/null
           sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
           sdkmanager "ndk;25.2.9519653"
           
-          # Set NDK_HOME env variable
-          echo "ANDROID_NDK_HOME=$HOME/android-sdk/ndk/25.2.9519653" >> $GITHUB_ENV
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/25.2.9519653" >> $GITHUB_ENV
 
       - name: Run the Buildozer build
         run: buildozer -v android debug
