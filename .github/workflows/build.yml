@@ -46,11 +46,9 @@ jobs:
           pip install buildozer
           pip install cython==0.29.34
 
-      # The env variable below tells Buildozer to auto-accept licenses
+      # We now set the variable directly in the command line
       - name: Build with Buildozer
-        run: buildozer -v android debug
-        env:
-          ANDROID_SDK_LICENSE_ALL: "y"
+        run: ANDROID_SDK_LICENSE_ALL=y buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
