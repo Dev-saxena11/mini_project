@@ -300,5 +300,11 @@ def handle_leave_room(data):
 def run_server():
     """Initialize DB and start the SocketIO server."""
     initialize_database()
-    print("Starting Flask + SocketIO server...")
-    socketio.run(app, host='0.0.0.0', port=5000)  # <-- use 0.0.0.0
+    print("Starting Flask + SocketIO server for local development...")
+    
+    # Disable the reloader to allow running in a background thread
+    socketio.run(app, 
+                 port=5000, 
+                 debug=True, 
+                 use_reloader=False, 
+                 allow_unsafe_werkzeug=True)
