@@ -1,56 +1,47 @@
-[app]
+name: build-android
 
-title = MyApp
-package.name = myapp
-package.domain = org.example
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
-# Main entry
-source.dir = .
-source.main = main.py
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
 
-# ... (other settings) ...
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
 
-# Include all assets/templates/static
-source.include_exts = py,kv,png,jpg,jpeg,html,css,js
+    - name: Install dependencies
+      run: |
+        sudo apt update
+        sudo apt install -y python3-pip git zip unzip openjdk-17-jdk
+        pip install --upgrade pip cython buildozer
 
-# Version
-version = 0.1
+    - name: Install Android SDK Build Tools
+      run: |
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+        yes | sdkmanager --licenses
+        sdkmanager "platforms;android-33" "build-tools;33.0.2"
+    
+    # New step to clean the cache before building
+    - name: Clean Buildozer cache
+      run: |
+        rm -rf .buildozer/
 
-# Core requirements
-requirements = python3,kivy,flask,flask-socketio,eventlet,jnius,itsdangerous,Jinja2,MarkupSafe,python-engineio,python-socketio,Werkzeug
+    - name: Build Debug APK
+      run: |
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/33.0.2:$PATH"
+        buildozer android debug
 
-# Permissions
-android.permissions = INTERNET,ACCESS_NETWORK_STATE,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE
-
-# API / SDK versions (sync with GitHub Actions)
-android.api = 33
-android.minapi = 21
-android.ndk = 25b
-android.sdk = 33
-android.build_tools_version = 33.0.2  # <-- Add this line
-
-# Architectures
-android.archs = arm64-v8a,armeabi-v7a
-
-# Copy all libs (prevents missing modules at runtime)
-android.copy_libs = 1
-
-# Java class needed for WebView
-android.java_classes = org.kivy.android.PythonActivity
-
-# Orientation & fullscreen
-orientation = portrait
-fullscreen = 0
-android.hide_statusbar = False
-
-# Optional branding
-presplash.filename = %(source.dir)s/data/presplash.png
-icon.filename = %(source.dir)s/data/icon.png
-
-# Backup allowed
-android.allow_backup = True
-
-# Release signing (disabled for debug builds)
-android.release = False
-
+    - name: Upload Debug APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: MyApp-debug-apk
+        path: bin/*.apk
