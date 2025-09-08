@@ -45,4 +45,4 @@ if __name__ == '__main__':
     if platform == 'android':
         ClientApp().run()
     else:
-        run_server() # For desktop testing
+        run_server()

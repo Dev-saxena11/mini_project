@@ -298,7 +298,7 @@ def handle_leave_room(data):
 # In app.py, replace your current run_server function with this one:
 
 def run_server():
-    """This function initializes the database and starts the full SocketIO server."""
+    """Initialize DB and start the SocketIO server."""
     initialize_database()
     print("Starting Flask + SocketIO server...")
-    socketio.run(app, host='127.0.0.1', port=5000)
+    socketio.run(app, host='0.0.0.0', port=5000)  # <-- use 0.0.0.0
