@@ -50,3 +50,4 @@ android.allow_backup = True
 
 # Release signing (disabled for debug builds)
 android.release = False
+
