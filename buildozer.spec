@@ -7,7 +7,9 @@ package.domain = org.example
 # Main entry
 source.dir = .
 source.main = main.py
-entrypoint = main.py
+
+# ... (other settings) ...
+
 
 # Include all assets/templates/static
 source.include_exts = py,kv,png,jpg,jpeg,html,css,js
@@ -26,6 +28,7 @@ android.api = 33
 android.minapi = 21
 android.ndk = 25b
 android.sdk = 33
+android.build_tools_version = 33.0.2  # <-- Add this line
 
 # Architectures
 android.archs = arm64-v8a,armeabi-v7a
