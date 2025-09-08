@@ -10,6 +10,11 @@ app = Flask(__name__)
 app.secret_key = "a_much_more_secure_secret_key_123!"
 socketio = SocketIO(app)
 
+# --- SERVER CONFIGURATION ---
+# Define host and port here to be used by the server and imported by the client
+HOST = '127.0.0.1'
+PORT = 5000
+
 # --- DATABASE INITIALIZATION ---
 def initialize_database():
     """Sets up DB tables if they don't exist."""
@@ -67,13 +72,11 @@ def auth():
             show_register = True
             email = request.form.get("email")
             
-            # --- FIX: Validate the plain-text password here, BEFORE hashing ---
             is_valid, message = database.validate_password(password)
             if not is_valid:
                 flash(f"⚠️ {message}", "error")
                 return render_template("auth.html", show_register=True)
 
-            # Hash the password after it has been validated
             hashed_password = generate_password_hash(password)
 
             user_id = database.add_user(
@@ -127,8 +130,6 @@ def user():
 
     conn.close()
     return render_template("user.html", user=user_data, group=group, members=members)
-
-
 
 # --- GROUP ROUTES ---
 @app.route('/groups', methods=["GET", "POST"])
@@ -295,16 +296,18 @@ def handle_leave_room(data):
     leave_room(group_id)
     print(f"Client left room: {group_id}")
 
-# In app.py, replace your current run_server function with this one:
-
 def run_server():
     """Initialize DB and start the SocketIO server."""
     initialize_database()
-    print("Starting Flask + SocketIO server for local development...")
+    print(f"Starting Flask + SocketIO server on http://{HOST}:{PORT}")
     
-    # Disable the reloader to allow running in a background thread
     socketio.run(app, 
-                 port=5000, 
+                 host=HOST,
+                 port=PORT, 
                  debug=True, 
                  use_reloader=False, 
                  allow_unsafe_werkzeug=True)
+    
+# This makes the script runnable directly for testing
+if __name__ == '__main__':
+    run_server()
