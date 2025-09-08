@@ -1,47 +1,28 @@
-name: build-android
+# In buildozer.spec
 
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+[app]
+title = Travel Together
+package.name = myflaskapp
+package.domain = com.rudrasingh
+source.dir = .
+source.main_py = main.py
 
-jobs:
-  build-android:
-    runs-on: ubuntu-latest
+requirements = python3,kivy,flask,flask_socketio,jnius,blinker,click,colorama,gunicorn,itsdangerous,Jinja2,MarkupSafe,python-engineio,python-socketio,simple-websocket,Werkzeug
+source.include_patterns = app.py,database.py,travel_together.db,templates/*,static/*
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+version = 1.0
+orientation = portrait
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+[android]
+android.permissions = INTERNET
+android.api = 34
+android.build_tools_version = 34.0.0
 
-    - name: Install dependencies
-      run: |
-        sudo apt update
-        sudo apt install -y python3-pip git zip unzip openjdk-17-jdk
-        pip install --upgrade pip cython buildozer
+android.archs = arm64-v8a, armeabi-v7a
+android.minapi = 21
+android.versioncode = 1
+android.private_storage = True
+android.accept_sdk_license = True
 
-    - name: Install Android SDK Build Tools
-      run: |
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-        yes | sdkmanager --licenses
-        sdkmanager "platforms;android-33" "build-tools;33.0.2"
-    
-    # New step to clean the cache before building
-    - name: Clean Buildozer cache
-      run: |
-        rm -rf .buildozer/
-
-    - name: Build Debug APK
-      run: |
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/33.0.2:$PATH"
-        buildozer android debug
-
-    - name: Upload Debug APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: MyApp-debug-apk
-        path: bin/*.apk
+[buildozer]
+log_level = 2
