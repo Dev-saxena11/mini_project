@@ -24,9 +24,10 @@ jobs:
         sudo apt install -y python3-pip git zip unzip openjdk-17-jdk
         pip install --upgrade pip cython buildozer
 
+    # This step now includes the path to build-tools
     - name: Install Android SDK Build Tools
       run: |
-        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
+        export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/build-tools/33.0.2:$PATH"
         yes | sdkmanager --licenses
         sdkmanager "platforms;android-33" "build-tools;33.0.2"
 
