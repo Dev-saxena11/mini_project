@@ -42,7 +42,4 @@ class ClientApp(App):
             return Label(text=error_message)
 
 if __name__ == '__main__':
-    if platform == 'android':
-        ClientApp().run()
-    else:
-        run_server()
+    ClientApp().run()
