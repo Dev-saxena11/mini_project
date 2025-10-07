@@ -115,38 +115,5 @@
     </footer>
 
     <script src="/static/script.js"></script>
-    <button class="chatbot-toggle" onclick="toggleChatbot()" id="chatbot-toggle-btn">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
-</button>
-
-<div class="chatbot-container" id="chatbot-container">
-    <div class="chatbot-header">
-        <h3>Travel Assistant</h3>
-        <div class="header-buttons">
-            <button class="clear-chat" id="clear-chat-btn" title="Clear Chat">🔄</button>
-            <button class="close-chat" onclick="closeChatbot()" title="Close Chat">✖</button>
-        </div>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-        <div class="message bot-message typing-indicator" id="typing-indicator">
-            <p><span></span><span></span><span></span></p>
-        </div>
-    </div>
-    <div class="quick-actions" id="quick-actions">
-        <button class="quick-action" onclick="sendQuickMessage('How it works')">How it works</button>
-        <button class="quick-action" onclick="sendQuickMessage('Join groups')">Join groups</button>
-        <button class="quick-action" onclick="sendQuickMessage('What are the features?')">Features</button>
-    </div>
-    <div class="chat-input-container">
-        <input type="text" class="chat-input" id="chat-input" placeholder="Ask something..." onkeypress="handleKeyPress(event)">
-        <button class="send-button" onclick="sendMessage()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-        </button>
-    </div>
-</div>
-    
-    <script src="/static/script.js"></script>
-</body>
-</html>
 </body>
 </html>

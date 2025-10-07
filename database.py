@@ -142,6 +142,62 @@ def add_user(username, hashed_password, email, **kwargs):
 
 # --- DESTINATION MANAGEMENT ---
 
+def add_destination(destination_name, country=None):
+    """Adds a new destination to the database."""
+    if not destination_name or not destination_name.strip():
+        return None
+    
+    clean_name = destination_name.strip().title()
+    dest_id = generate_id()
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO Destinations (destination_id, destination_name, country) VALUES (?, ?, ?)",
+            (dest_id, clean_name, country or "Unknown")
+        )
+        conn.commit()
+        return dest_id
+    except sqlite3.IntegrityError:  # Handles unique constraint violation
+        return None
+    finally:
+        conn.close()
+
+def get_destination_by_id(destination_id):
+    """Fetches a single destination by its ID."""
+    conn = get_db_connection()
+    destination = conn.execute("SELECT * FROM Destinations WHERE destination_id = ?", (destination_id,)).fetchone()
+    conn.close()
+    return destination
+
+def update_destination(destination_id, name, country):
+    """Updates a destination's details."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE Destinations SET destination_name = ?, country = ? WHERE destination_id = ?",
+            (name.strip().title(), country.strip().title(), destination_id)
+        )
+        conn.commit()
+        return cursor.rowcount > 0 # Returns True if a row was updated
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
+
+def delete_destination(destination_id):
+    """Deletes a destination."""
+    conn = get_db_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Destinations WHERE destination_id = ?", (destination_id,))
+        conn.commit()
+        return cursor.rowcount > 0 # Returns True if a row was deleted
+    except sqlite3.Error:
+        return False
+    finally:
+        conn.close()
+
 def get_all_destinations():
     """Fetches all destinations to populate a dropdown."""
     conn = get_db_connection()

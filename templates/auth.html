@@ -11,19 +11,17 @@
     <a href="/home" class="back-link-auth">← Back to Home</a>
 
     <div class="auth-container">
-        {% with messages = get_flashed_messages() %}
-          {% if messages %}
-            <div id="flash-container">
-                <ul class="flash-messages">
-                  {% for message in messages %}
-                    <li>{{ message }}</li>
-                  {% endfor %}
-                </ul>
-            </div>
-          {% endif %}
-        {% endwith %}
+        <div class="flash-messages-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
     
-        <div class="auth-form-panel" id="login-form">
+        <div class="auth-form-panel {% if show_register %}hidden{% endif %}" id="login-form">
             <h2>Welcome Back</h2>
             <form method="POST">
                 <input type="hidden" name="action" value="login">
@@ -34,7 +32,7 @@
             <p class="toggle-link">Don’t have an account? <span onclick="toggleForms()">Register</span></p>
         </div>
 
-        <div class="auth-form-panel hidden" id="register-form">
+        <div class="auth-form-panel {% if not show_register %}hidden{% endif %}" id="register-form">
             <h2>Join the Adventure</h2>
             <form method="POST">
                 <input type="hidden" name="action" value="register">
@@ -60,43 +58,6 @@
             document.getElementById("login-form").classList.toggle("hidden");
             document.getElementById("register-form").classList.toggle("hidden");
         }
-
-        // Check if the server passed a flag to show the register form
-        const showRegister = {{ 'true' if show_register else 'false' }};
-        if (showRegister) {
-            toggleForms();
-        }
-
-        // --- NEW SCRIPT TO HIDE FLASH MESSAGES ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const flashContainer = document.getElementById('flash-container');
-            
-            // If there are no flash messages on the page, do nothing.
-            if (!flashContainer) {
-                return;
-            }
-
-            // Get all user input fields within the main auth container.
-            const formInputs = document.querySelectorAll('.auth-container input, .auth-container select, .auth-container textarea');
-
-            // This function fades out and then hides the flash message container.
-            const hideFlashMessages = () => {
-                if (flashContainer) {
-                    flashContainer.style.transition = 'opacity 0.5s ease';
-                    flashContainer.style.opacity = '0';
-                    // Wait for the fade-out transition to finish before hiding the element completely.
-                    setTimeout(() => {
-                        flashContainer.style.display = 'none';
-                    }, 500);
-                }
-            };
-
-            // Add an event listener to each input field.
-            // The message will disappear as soon as the user clicks on any field.
-            formInputs.forEach(input => {
-                input.addEventListener('focus', hideFlashMessages, { once: true }); // { once: true } makes it run only one time
-            });
-        });
     </script>
 </body>
 </html>

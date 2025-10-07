@@ -5,8 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Travel Together - Groups</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .destination-form, .destination-edit-form {
+            display: grid;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .destination-form {
+            grid-template-columns: 1fr 1fr;
+        }
+        .destination-form button {
+            grid-column: 1 / -1;
+        }
+        .destination-edit-form {
+            grid-template-columns: 1fr 1fr auto auto;
+        }
+        .destination-list {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .destination-item {
+            padding: 10px;
+            border-radius: 8px;
+            background-color: var(--theme-bg);
+            margin-bottom: 10px;
+            border: 1px solid var(--theme-border);
+        }
+        .destination-edit-form .btn {
+            padding: 8px 12px;
+            font-size: 0.9rem;
+            text-align: center;
+        }
+    </style>
 </head>
-<body>
+<body class="page-groups">
     <header class="navbar">
         <div class="logo">
             <p>Travel Together</p>
@@ -17,7 +52,6 @@
             <a href="/groups" class="active">Groups</a>
             <a href="/travel">Travel Assistant</a>
             <a href="/about">About Us</a>
-            
         </nav>
         <div class="menu-toggle" id="menu-toggle">
             <div class="bar"></div>
@@ -50,6 +84,35 @@
                     <textarea name="group_description" placeholder="Group Description (optional)"></textarea>
                     <button type="submit">➕ Create Group</button>
                 </form>
+            </div>
+
+            <div class="dashboard-card" style="margin-bottom: 40px;">
+                <h3 style="text-align: center; margin-bottom: 20px; font-size: 1.5rem; color: var(--primary-color);">Manage Destinations</h3>
+                
+                <form method="POST" action="/destinations/add" class="destination-form" style="margin-bottom: 30px; border-bottom: 1px solid var(--theme-border); padding-bottom: 20px;">
+                    <h4 style="grid-column: 1 / -1; text-align: center; margin-bottom: 10px;">Add a New Destination</h4>
+                    <input type="text" name="destination_name" placeholder="Destination Name (e.g., Paris)" required>
+                    <input type="text" name="country" placeholder="Country (e.g., France)">
+                    <button type="submit">➕ Add Destination</button>
+                </form>
+            
+                <div class="destination-list-container">
+                    <h4 style="text-align: center; margin-bottom: 20px;">Existing Destinations</h4>
+                    <ul class="destination-list">
+                        {% for dest in destinations %}
+                        <li class="destination-item">
+                            <form method="POST" action="/destinations/edit/{{ dest.destination_id }}" class="destination-edit-form">
+                                <input type="text" name="destination_name" value="{{ dest.destination_name }}" required>
+                                <input type="text" name="country" value="{{ dest.country or '' }}">
+                                <button type="submit" class="btn edit-btn">💾 Update</button>
+                                <a href="/destinations/delete/{{ dest.destination_id }}" class="btn delete-btn" onclick="return confirm('Are you sure you want to delete this destination? This cannot be undone.');">🗑️ Delete</a>
+                            </form>
+                        </li>
+                        {% else %}
+                        <li style="text-align: center; padding: 20px;">No destinations found. Add one above!</li>
+                        {% endfor %}
+                    </ul>
+                </div>
             </div>
 
             <div class="dashboard-card" style="margin-bottom: 40px;">
@@ -104,40 +167,7 @@
     <footer>
         <p>© 2025 Mini Project</p>
     </footer>
-
-    
-    <button class="chatbot-toggle" onclick="toggleChatbot()" id="chatbot-toggle-btn">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
-</button>
-
-<div class="chatbot-container" id="chatbot-container">
-    <div class="chatbot-header">
-        <h3>Travel Assistant</h3>
-        <div class="header-buttons">
-            <button class="clear-chat" id="clear-chat-btn" title="Clear Chat">🔄</button>
-            <button class="close-chat" onclick="closeChatbot()" title="Close Chat">✖</button>
-        </div>
-    </div>
-    <div class="chat-messages" id="chat-messages">
-        <div class="message bot-message typing-indicator" id="typing-indicator">
-            <p><span></span><span></span><span></span></p>
-        </div>
-    </div>
-    <div class="quick-actions" id="quick-actions">
-        <button class="quick-action" onclick="sendQuickMessage('How it works')">How it works</button>
-        <button class="quick-action" onclick="sendQuickMessage('Join groups')">Join groups</button>
-        <button class="quick-action" onclick="sendQuickMessage('What are the features?')">Features</button>
-    </div>
-    <div class="chat-input-container">
-        <input type="text" class="chat-input" id="chat-input" placeholder="Ask something..." onkeypress="handleKeyPress(event)">
-        <button class="send-button" onclick="sendMessage()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-        </button>
-    </div>
-</div>
     
     <script src="/static/script.js"></script>
-</body>
-</html>
 </body>
 </html>

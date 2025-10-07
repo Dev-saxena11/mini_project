@@ -6,7 +6,7 @@
     <title>{{ group_name }} - Chat</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body data-group-id="{{ group_id }}" data-username="{{ username }}">
+<body class="page-chat" data-group-id="{{ group_id }}" data-username="{{ username }}">
 <header class="navbar">
     <div class="logo">Travel Together</div>
     <nav class="nav-links" id="nav-links">
@@ -37,7 +37,7 @@
         <form class="group-chat-form" id="chat-form">
             <input type="text" name="message" placeholder="Type a message..." required autocomplete="off">
             <button type="submit" class="send-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24" 24" fill="currentColor" width="24" height="24">
                     <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
                 </svg>
             </button>

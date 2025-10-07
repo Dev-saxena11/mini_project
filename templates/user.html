@@ -6,7 +6,7 @@
     <title>User Dashboard</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body class="page-user">
     <header class="navbar">
         <div class="logo">
             <p>Travel Together</p>
@@ -39,11 +39,11 @@
                         </div>
                     </div>
                     <div class="profile-details">
-                        {% if user['phone_no'] %}<span><strong>📞 Phone:</strong> {{ user['phone_no'] }}</span>{% endif %}
-                        {% if user['gender'] %}<span><strong>🧑 Gender:</strong> {{ user['gender'] }}</span>{% endif %}
-                        {% if user['marital_status'] %}<span><strong>💍 Status:</strong> {{ user['marital_status'] }}</span>{% endif %}
+                        <span><strong>📞 Phone:</strong> {{ user['phone_no'] or 'Not set' }}</span>
+                        <span><strong>🧑 Gender:</strong> {{ user['gender'] or 'Not set' }}</span>
                     </div>
-                    {% if user['bio'] %}<p class="profile-bio">"{{ user['bio'] }}"</p>{% endif %}
+                    {% if user['bio'] %}<p class="profile-bio">"{{ user['bio'] }}"</p>{% else %}<p class="profile-bio" style="color: #9ca3af;">No bio provided.</p>{% endif %}
+                    <button class="btn edit-btn" style="margin-top: 20px;" onclick="document.getElementById('edit-profile-modal').style.display='flex'">✏️ Edit Profile</button>
                 </div>
 
                 <div class="dashboard-card current-group-card">
@@ -65,7 +65,7 @@
                                 </li>
                             {% endfor %}
                         </ul>
-                        <a href="/groups/leave" class="btn delete-btn" style="margin-top: 20px;">🚪 Leave Group</a>
+                        <a href="/groups/leave/{{ group.group_id }}" class="btn delete-btn" style="margin-top: 20px;">🚪 Leave Group</a>
                     {% else %}
                         <div class="no-group-info">
                             <h3>You are not in a group yet!</h3>
@@ -82,38 +82,34 @@
         <p>© 2025 Mini Project</p>
     </footer>
     
-    <button class="chatbot-toggle" onclick="toggleChatbot()" id="chatbot-toggle-btn">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"></path></svg>
-</button>
+    <div id="edit-profile-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>Edit Your Profile</h2>
+                <span class="close-button" onclick="document.getElementById('edit-profile-modal').style.display='none'">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form action="/user/edit" method="POST" class="modal-form">
+                    <label for="phone_no">Phone Number</label>
+                    <input type="tel" id="phone_no" name="phone_no" value="{{ user['phone_no'] or '' }}" placeholder="Your phone number">
+                    
+                    <label for="gender">Gender</label>
+                    <select id="gender" name="gender">
+                        <option value="" {% if not user['gender'] %}selected{% endif %}>Prefer not to say</option>
+                        <option value="Male" {% if user['gender'] == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if user['gender'] == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if user['gender'] == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
 
-<div class="chatbot-container" id="chatbot-container">
-    <div class="chatbot-header">
-        <h3>Travel Assistant</h3>
-        <div class="header-buttons">
-            <button class="clear-chat" id="clear-chat-btn" title="Clear Chat">🔄</button>
-            <button class="close-chat" onclick="closeChatbot()" title="Close Chat">✖</button>
+                    <label for="bio">Your Bio</label>
+                    <textarea id="bio" name="bio" rows="4" placeholder="Tell us a little about yourself...">{{ user['bio'] or '' }}</textarea>
+
+                    <button type="submit" class="btn join-btn">Save Changes</button>
+                </form>
+            </div>
         </div>
     </div>
-    <div class="chat-messages" id="chat-messages">
-        <div class="message bot-message typing-indicator" id="typing-indicator">
-            <p><span></span><span></span><span></span></p>
-        </div>
-    </div>
-    <div class="quick-actions" id="quick-actions">
-        <button class="quick-action" onclick="sendQuickMessage('How it works')">How it works</button>
-        <button class="quick-action" onclick="sendQuickMessage('Join groups')">Join groups</button>
-        <button class="quick-action" onclick="sendQuickMessage('What are the features?')">Features</button>
-    </div>
-    <div class="chat-input-container">
-        <input type="text" class="chat-input" id="chat-input" placeholder="Ask something..." onkeypress="handleKeyPress(event)">
-        <button class="send-button" onclick="sendMessage()">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
-        </button>
-    </div>
-</div>
-    
+
     <script src="/static/script.js"></script>
-</body>
-</html>
 </body>
 </html>

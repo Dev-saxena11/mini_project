@@ -208,6 +208,59 @@ def delete_group_route(group_id):
     conn.close()
     return redirect("/groups")
 
+# --- DESTINATION MANAGEMENT ROUTES (for web pages) ---
+@app.route('/destinations/add', methods=['POST'])
+def add_destination_route():
+    conn, user = validate_user_session()
+    if not user:
+        return redirect("/auth")
+    
+    destination_name = request.form.get('destination_name')
+    country = request.form.get('country')
+
+    if not destination_name:
+        flash("⚠️ Destination name cannot be empty.", "error")
+    elif database.add_destination(destination_name, country):
+        flash("✅ Destination added successfully!", "success")
+    else:
+        flash("❌ Failed to add destination. It might already exist.", "error")
+    
+    conn.close()
+    return redirect('/groups')
+
+@app.route('/destinations/edit/<destination_id>', methods=['POST'])
+def edit_destination_route(destination_id):
+    conn, user = validate_user_session()
+    if not user:
+        return redirect("/auth")
+        
+    destination_name = request.form.get('destination_name')
+    country = request.form.get('country')
+
+    if not destination_name:
+        flash("⚠️ Destination name cannot be empty.", "error")
+    elif database.update_destination(destination_id, destination_name, country):
+        flash("✅ Destination updated successfully!", "success")
+    else:
+        flash("❌ Failed to update destination.", "error")
+        
+    conn.close()
+    return redirect('/groups')
+
+@app.route('/destinations/delete/<destination_id>')
+def delete_destination_route(destination_id):
+    conn, user = validate_user_session()
+    if not user:
+        return redirect("/auth")
+    
+    if database.delete_destination(destination_id):
+        flash("✅ Destination deleted successfully!", "success")
+    else:
+        flash("❌ Failed to delete destination.", "error")
+        
+    conn.close()
+    return redirect('/groups')
+
 # --- GROUP CHAT ROUTES ---
 @app.route('/groups/chat/<group_id>')
 def group_chat(group_id):
@@ -264,6 +317,77 @@ def send_message_api(group_id):
     
     conn.close()
     return jsonify({"status": "success"})
+
+# --- DESTINATION API ROUTES ---
+@app.route('/api/destinations', methods=['POST'])
+def create_destination_api():
+    """API endpoint to create a new destination."""
+    conn, user = validate_user_session()
+    if not user:
+        return jsonify({"status": "error", "message": "Authentication required"}), 401
+    
+    data = request.json
+    destination_name = data.get('destination_name')
+    country = data.get('country')
+
+    if not destination_name:
+        conn.close()
+        return jsonify({"status": "error", "message": "Destination name is required"}), 400
+
+    destination_id = database.add_destination(destination_name, country)
+
+    if destination_id:
+        new_destination = database.get_destination_by_id(destination_id)
+        conn.close()
+        return jsonify({"status": "success", "message": "Destination created", "data": dict(new_destination)}), 201
+    else:
+        conn.close()
+        return jsonify({"status": "error", "message": "Destination may already exist or invalid data provided"}), 409
+
+@app.route('/api/destinations', methods=['GET'])
+def get_destinations_api():
+    """API endpoint to get all destinations."""
+    destinations_rows = database.get_all_destinations()
+    destinations = [dict(row) for row in destinations_rows]
+    return jsonify({"status": "success", "data": destinations})
+
+@app.route('/api/destinations/<destination_id>', methods=['PUT'])
+def update_destination_api(destination_id):
+    """API endpoint to update a destination."""
+    conn, user = validate_user_session()
+    if not user:
+        return jsonify({"status": "error", "message": "Authentication required"}), 401
+
+    data = request.json
+    destination_name = data.get('destination_name')
+    country = data.get('country')
+
+    if not all([destination_name, country]):
+        conn.close()
+        return jsonify({"status": "error", "message": "Both destination_name and country are required"}), 400
+
+    if database.update_destination(destination_id, destination_name, country):
+        updated_destination = database.get_destination_by_id(destination_id)
+        conn.close()
+        return jsonify({"status": "success", "message": "Destination updated", "data": dict(updated_destination)})
+    else:
+        conn.close()
+        return jsonify({"status": "error", "message": "Update failed or destination not found"}), 404
+
+@app.route('/api/destinations/<destination_id>', methods=['DELETE'])
+def delete_destination_api(destination_id):
+    """API endpoint to delete a destination."""
+    conn, user = validate_user_session()
+    if not user:
+        return jsonify({"status": "error", "message": "Authentication required"}), 401
+    # Note: In a real app, you'd check for admin privileges here.
+    
+    if database.delete_destination(destination_id):
+        conn.close()
+        return jsonify({"status": "success", "message": "Destination deleted"})
+    else:
+        conn.close()
+        return jsonify({"status": "error", "message": "Deletion failed or destination not found"}), 404
 
 @app.route('/api/chatbot', methods=['POST'])
 def chatbot_api():
